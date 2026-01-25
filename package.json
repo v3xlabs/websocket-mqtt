@@ -12,6 +12,7 @@
   "license": "LGPL-3.0",
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
+    "mqtt": "^5.14.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
