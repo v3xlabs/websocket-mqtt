@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
+  "repository": {
+    "url": "https://github.com/v3xlabs/websocket-mqtt"
+  },
   "keywords": [],
   "author": "",
   "license": "LGPL-3.0",
