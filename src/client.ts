@@ -1,7 +1,7 @@
+import { ConnectionOptions } from ".";
 import { createEventEmitter, EventEmitter } from "./events";
 import {
   type ConnackPacket,
-  type ConnectionOptions,
   decodeAll,
   DEFAULT_KEEPALIVE_SECONDS,
   encodeConnect,

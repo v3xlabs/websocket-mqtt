@@ -1,19 +1,5 @@
 import type { QoSLevel } from "./constants";
 
-export type ConnectionOptions = {
-  clientId?: string;
-  username?: string;
-  password?: string;
-  keepalive?: number;
-  clean?: boolean;
-  will?: {
-    topic: string;
-    payload: string | Uint8Array;
-    qos?: QoSLevel;
-    retain?: boolean;
-  };
-};
-
 export type BasePacket = {
   type: number;
 };

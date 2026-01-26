@@ -1,10 +1,11 @@
 import { createMqttClient, type MqttClient } from "./client";
+import { QoSLevel } from "./packets";
 
 export { createMqttClient, type MqttClient } from "./client";
-export type { ConnectionOptions, MqttPacket, QoSLevel } from "./packets";
+export type { MqttPacket, QoSLevel } from "./packets";
 export { QoS } from "./packets";
 
-export interface ConnectOptions {
+export type ConnectionOptions = {
   clientId?: string;
   username?: string;
   password?: string;
@@ -13,12 +14,15 @@ export interface ConnectOptions {
   will?: {
     topic: string;
     payload: string | Uint8Array;
-    qos?: 0 | 1 | 2;
+    qos?: QoSLevel;
     retain?: boolean;
   };
-}
+};
 
-export function connect(url: string, options: ConnectOptions = {}): MqttClient {
+export function connect(
+  url: string,
+  options: ConnectionOptions = {},
+): MqttClient {
   const client = createMqttClient({ url, ...options });
 
   client.connect();
@@ -28,7 +32,7 @@ export function connect(url: string, options: ConnectOptions = {}): MqttClient {
 
 export function connectAsync(
   url: string,
-  options: ConnectOptions = {},
+  options: ConnectionOptions = {},
 ): Promise<MqttClient> {
   return new Promise((resolve, reject) => {
     const client = createMqttClient({ url, ...options });
