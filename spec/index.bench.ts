@@ -1,4 +1,4 @@
-import { test, expect, bench } from 'vitest';
+import { expect, bench } from 'vitest';
 import { connect as connectMqtt } from 'mqtt';
 
 bench('mqtt connection', () => {

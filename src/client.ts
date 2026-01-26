@@ -81,9 +81,9 @@ export function createMqttClient(options: MqttClientOptions) {
     }
 
     function nextMessageId(): number {
-        const id = messageIdCounter;
+        const messageId = messageIdCounter;
         messageIdCounter = (messageIdCounter % 65535) + 1;
-        return id;
+        return messageId;
     }
 
     function startPingInterval(): void {

@@ -1,6 +1,6 @@
-import { test, expect, describe, beforeEach, afterEach } from 'vitest';
+import { expect, describe, beforeEach, afterEach, test } from 'vitest';
 import { connect as connectStandard, MqttClient as StandardMqttClient } from 'mqtt';
-import { connect, connectAsync, MqttClient } from '../src';
+import { connectAsync, MqttClient } from '../src';
 
 const TEST_BROKER = 'wss://broker.itdata.nu/mqtt';
 
@@ -19,9 +19,7 @@ function waitForMessage(
             if (!expectedTopic || topic === expectedTopic) {
                 clearTimeout(timer);
                 const payloadStr =
-                    payload instanceof Uint8Array
-                        ? new TextDecoder().decode(payload)
-                        : payload.toString();
+                    payload instanceof Uint8Array && new TextDecoder().decode(payload);
                 resolve({ topic, payload: payloadStr });
             }
         });
