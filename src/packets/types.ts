@@ -1,6 +1,6 @@
 import type { QoSLevel } from "./constants";
 
-export interface ConnectionOptions {
+export type ConnectionOptions = {
   clientId?: string;
   username?: string;
   password?: string;
@@ -12,13 +12,14 @@ export interface ConnectionOptions {
     qos?: QoSLevel;
     retain?: boolean;
   };
-}
-export interface BasePacket {
+};
+
+export type BasePacket = {
   type: number;
-}
+};
 
 // CONNECT Packet (Client => Broker)
-export interface ConnectPacket extends BasePacket {
+export type ConnectPacket = BasePacket & {
   type: 1;
   clientId: string;
   username?: string;
@@ -31,17 +32,17 @@ export interface ConnectPacket extends BasePacket {
     qos: QoSLevel;
     retain: boolean;
   };
-}
+};
 
 // CONNACK Packet (Broker => Client)
-export interface ConnackPacket extends BasePacket {
+export type ConnackPacket = BasePacket & {
   type: 2;
   sessionPresent: boolean;
   returnCode: number;
-}
+};
 
 // PUBLISH Packet (Both directions)
-export interface PublishPacket extends BasePacket {
+export type PublishPacket = BasePacket & {
   type: 3;
   topic: string;
   payload: Uint8Array;
@@ -49,45 +50,45 @@ export interface PublishPacket extends BasePacket {
   retain: boolean;
   dup: boolean;
   messageId?: number; // Required for QoS > 0
-}
+};
 
 // PUBACK Packet (Both directions)
-export interface PubackPacket extends BasePacket {
+export type PubackPacket = BasePacket & {
   type: 4;
   messageId: number;
-}
+};
 
 // SUBSCRIBE Packet (Client => Broker)
-export interface SubscribePacket extends BasePacket {
+export type SubscribePacket = BasePacket & {
   type: 8;
   messageId: number;
   subscriptions: Array<{
     topic: string;
     qos: QoSLevel;
   }>;
-}
+};
 
 // SUBACK Packet (Broker => Client)
-export interface SubackPacket extends BasePacket {
+export type SubackPacket = BasePacket & {
   type: 9;
   messageId: number;
   granted: number[]; // Array of granted QoS levels or 0x80 for failure
-}
+};
 
 // PINGREQ Packet (Client => Broker)
-export interface PingreqPacket extends BasePacket {
+export type PingreqPacket = BasePacket & {
   type: 12;
-}
+};
 
 // PINGRESP Packet (Broker => Client)
-export interface PingrespPacket extends BasePacket {
+export type PingrespPacket = BasePacket & {
   type: 13;
-}
+};
 
 // DISCONNECT Packet (Client => Broker)
-export interface DisconnectPacket extends BasePacket {
+export type DisconnectPacket = BasePacket & {
   type: 14;
-}
+};
 
 export type MqttPacket =
   | ConnectPacket

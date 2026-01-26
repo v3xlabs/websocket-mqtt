@@ -19,9 +19,9 @@ import {
 } from "./packets";
 import { toUint8Array } from "./utils/buffer";
 
-export interface MqttClientOptions extends ConnectionOptions {
+export type MqttClientOptions = ConnectionOptions & {
   url: string;
-}
+};
 
 export type MqttClientEvents = {
   connect: [packet: ConnackPacket];
