@@ -2,7 +2,7 @@ import { test, expect, bench } from 'vitest';
 import { connect as connectMqtt } from 'mqtt';
 
 bench('mqtt connection', () => {
-    const client = connectMqtt('mqtt://test.mosquitto.org', {});
+    const client = connectMqtt('wss://test.mosquitto.org', {});
 
     client.on('connect', async () => {
         await client.subscribeAsync('mqtt/test');
