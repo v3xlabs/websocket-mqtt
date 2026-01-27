@@ -11,12 +11,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-#   verify:
-#     name: Verify
-#     uses: ./.github/workflows/verify.yml
-#     secrets: inherit
-#     permissions:
-#       contents: read
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
+    secrets: inherit
+    permissions:
+      contents: read
   release:
     name: Release
     # needs: verify
