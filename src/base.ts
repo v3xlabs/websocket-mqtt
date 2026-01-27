@@ -22,12 +22,15 @@ export type MqttOptions = {
 
 export type MqttClient = EventEmitter<MqttEvents> & {
   connection: Connection;
+  isConnected: () => boolean;
   publish: (
     topic: string,
     payload: string | Uint8Array,
     options?: { qos?: QoSLevel; retain?: boolean },
   ) => Promise<void>;
   subscribe: (topic: string, qos?: QoSLevel) => Promise<number[]>;
+  connect: () => Promise<void>;
+  close: () => void;
 };
 
 export type MqttClientInternalRequest<K> = {
@@ -48,6 +51,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   const connection = createConnection(options, (packet) => {
     switch (packet.type) {
       case PacketType.SUBACK: {
+        console.log("SUBACK", packet);
         const request = pending.sub.get(packet.messageId);
 
         if (request) {
@@ -64,6 +68,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
         break;
       }
       case PacketType.PUBACK: {
+        console.log("PUBACK", packet);
         const request = pending.pub.get(packet.messageId);
 
         if (request) {
@@ -120,5 +125,21 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     });
   };
 
-  return { ...events, publish, subscribe, connection };
+  const connect = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      connection.open();
+      connection.on("connect", () => resolve());
+      connection.on("error", (err) => reject(err));
+    });
+  };
+
+  return {
+    ...events,
+    publish,
+    subscribe,
+    connection,
+    isConnected: () => connection.isConnected(),
+    connect,
+    close: () => connection.close(),
+  };
 };
