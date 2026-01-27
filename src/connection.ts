@@ -47,6 +47,7 @@ export type Connection = {
 export type ConnectionEvents = {
   connect: [packet: ConnackPacket];
   message: [topic: string, payload: Uint8Array, packet: PublishPacket];
+  packet: [packet: IncomingPacket];
   error: [error: unknown];
   close: [];
 };
@@ -55,7 +56,6 @@ export const DEFAULT_CLIENT_ID = "websocket_mqtt_";
 
 export const createConnection = (
   options: ConnectionOptions,
-  handlePacket: HandlePacketFunction,
 ) => {
   const events = createEventEmitter<ConnectionEvents>();
   let lastMessageId = 0;
@@ -185,7 +185,7 @@ export const createConnection = (
           break;
         default:
           console.log("received a default packet!");
-          handlePacket(packet);
+          events.emit("packet", packet);
           break;
       }
     };

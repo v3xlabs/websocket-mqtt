@@ -48,7 +48,9 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     pub: new Map(),
   };
   const events = createEventEmitter<MqttEvents>();
-  const connection = createConnection(options, (packet) => {
+  const connection = createConnection(options);
+
+  connection.on("packet", (packet) => {
     switch (packet.type) {
       case PacketType.SUBACK: {
         console.log("SUBACK", packet);
@@ -79,6 +81,25 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
         break;
       }
     }
+  });
+
+  connection.on("error", (err) => {
+    console.error("error", err);
+    events.emit("error", err);
+  });
+
+  connection.on("close", () => {
+    for (const request of pending.sub.values()) {
+      request.reject(new Error("Connection closed"));
+    }
+    pending.sub.clear();
+
+    for (const request of pending.pub.values()) {
+      request.reject(new Error("Connection closed"));
+    }
+    pending.pub.clear();
+
+    events.emit("close");
   });
 
   const publish = (
@@ -140,6 +161,9 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     connection,
     isConnected: () => connection.isConnected(),
     connect,
-    close: () => connection.close(),
+    close: () => {
+      console.log("closing from up above");
+      connection.close();
+    },
   };
 };
