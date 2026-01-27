@@ -2,21 +2,21 @@ import {
   createPacketWriter,
   type PacketWriter,
   toUint8Array,
-} from "../utils/buffer";
+} from "../utils/buffer.js";
 import {
   ConnectFlags,
   DEFAULT_KEEPALIVE_SECONDS,
   PacketType,
   PROTOCOL_NAME,
   PROTOCOL_VERSION,
-} from "./constants";
+} from "./constants.js";
 import type {
   ConnectPacket,
   OutgoingPacket,
   PubackPacket,
   PublishPacket,
   SubscribePacket,
-} from "./types";
+} from "./types.js";
 
 function writePacket(
   type: number,

@@ -1,4 +1,4 @@
-import type { QoSLevel } from "./constants";
+import type { QoSLevel } from "./constants.js";
 
 export type BasePacket = {
   type: number;

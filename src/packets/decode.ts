@@ -1,5 +1,5 @@
-import { createPacketReader, type PacketReader } from "../utils/buffer";
-import { PacketType } from "./constants";
+import { createPacketReader, type PacketReader } from "../utils/buffer.js";
+import { PacketType } from "./constants.js";
 import type {
   ConnackPacket,
   IncomingPacket,
@@ -7,7 +7,7 @@ import type {
   PubackPacket,
   PublishPacket,
   SubackPacket,
-} from "./types";
+} from "./types.js";
 
 export interface DecodeResult {
   packet: IncomingPacket;
