@@ -12,8 +12,7 @@ bench(
       await client.publishAsync("mqtt/test", "Hello, world!");
     });
 
-    client.on("message", (topic, message) => {
-      console.log(topic, message.toString());
+    client.on("message", () => {
       client.end();
       // test complete
       expect(true).toBe(true);

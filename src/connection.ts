@@ -1,5 +1,6 @@
 import { QoSLevel } from ".";
-import { createEventEmitter } from "./events";
+import { createEventEmitter } from "./utils/events";
+import { createLogger, LogOptions } from "./utils/logger";
 import {
   ConnackPacket,
   decodeAll,
@@ -32,7 +33,7 @@ export type ConnectionOptions = {
     retain?: boolean;
   };
   signal?: AbortSignal;
-};
+} & LogOptions;
 
 export type HandlePacketFunction = (packet: IncomingPacket) => void;
 
@@ -56,6 +57,7 @@ export const DEFAULT_CLIENT_ID = "websocket_mqtt_";
 
 export const createConnection = (options: ConnectionOptions) => {
   const events = createEventEmitter<ConnectionEvents>();
+  const log = createLogger(options);
   let lastMessageId = 1;
   let connected = false;
   let pingInterval: ReturnType<typeof setInterval> | null = null;
@@ -87,7 +89,7 @@ export const createConnection = (options: ConnectionOptions) => {
   };
 
   const startPingInterval = (): void => {
-    console.log("starting ping interval");
+    log.debug("starting ping interval");
 
     if (keepalive > 0) {
       const pingIntervalMs = (keepalive * 1000) / 2;
@@ -99,21 +101,21 @@ export const createConnection = (options: ConnectionOptions) => {
   };
 
   const send = (packet: OutgoingPacket): void => {
-    console.log("sending packet", packet);
+    log.debug("sending packet", packet);
     sendRaw(encodePacket(packet));
   };
 
   const sendRaw = (data: Uint8Array): void => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      console.log("sending raw data", data);
+      log.debug("sending raw data", data);
       ws.send(data);
     } else {
-      console.log("not sending raw data", data);
+      log.debug("not sending raw data", data);
     }
   };
 
   const close = () => {
-    console.log("closing connection");
+    log.debug("closing connection");
 
     if (connected && ws) {
       sendRaw(encodeDisconnect());
@@ -150,7 +152,7 @@ export const createConnection = (options: ConnectionOptions) => {
     let receiveBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
 
     const handlePacket2 = (packet: IncomingPacket) => {
-      console.log("handlePacket2", packet);
+      log.debug("handlePacket2", packet);
 
       switch (packet.type) {
         case PacketType.CONNACK:
@@ -158,7 +160,7 @@ export const createConnection = (options: ConnectionOptions) => {
             connected = true;
             startPingInterval();
             events.emit("connect", packet);
-            console.log("connected");
+            log.debug("connected");
           } else {
             const message = getConnackErrorMessage(packet.returnCode);
 
@@ -169,7 +171,7 @@ export const createConnection = (options: ConnectionOptions) => {
 
           break;
         case PacketType.PUBLISH:
-          console.log("received a publish packet!");
+          log.debug("received a publish packet");
 
           if (packet.qos === 1 && packet.messageId !== undefined) {
             send({ type: PacketType.PUBACK, messageId: packet.messageId });
@@ -179,17 +181,17 @@ export const createConnection = (options: ConnectionOptions) => {
 
           break;
         case PacketType.PINGRESP:
-          console.log("PINGRESP");
+          log.debug("PINGRESP");
           break;
         default:
-          console.log("received a default packet!");
+          log.debug("received a default packet");
           events.emit("packet", packet);
           break;
       }
     };
 
     ws.onmessage = (event) => {
-      console.log("onmessage");
+      log.debug("onmessage");
       const data = new Uint8Array(event.data as ArrayBuffer);
       const combined = new Uint8Array(receiveBuffer.length + data.length);
 
@@ -201,10 +203,10 @@ export const createConnection = (options: ConnectionOptions) => {
 
       receiveBuffer = remaining;
 
-      console.log("packets to process ", packets.length);
+      log.debug("packets to process", packets.length);
 
       for (const packet of packets) {
-        console.log("packet", packet);
+        log.debug("packet", packet);
 
         handlePacket2(packet);
       }
@@ -215,7 +217,7 @@ export const createConnection = (options: ConnectionOptions) => {
     };
 
     ws.onclose = () => {
-      console.log("ws:onclose");
+      log.debug("ws:onclose");
       close();
     };
   };

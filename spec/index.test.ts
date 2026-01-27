@@ -14,7 +14,7 @@ function generateTopic(): string {
 }
 
 async function connectAsync(options: ConnectionOptions): Promise<MqttClient> {
-  const client = createMqtt(options);
+  const client = createMqtt({ ...options, debug: true });
 
   await client.connect();
 
@@ -118,13 +118,9 @@ describe("Cross-Library Communication", () => {
     const topic = generateTopic();
     const message = "Hello from standard library!";
 
-    console.log("ourClient subscribing");
     await ourClient.subscribe(topic);
-    console.log("ourClient subscribed");
 
     const messagePromise = waitForMessage(ourClient, topic);
-
-    console.log("waiting for message");
 
     stdClient.publish(topic, message);
 

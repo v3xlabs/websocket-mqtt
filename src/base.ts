@@ -1,5 +1,6 @@
 import { Connection, ConnectionOptions, createConnection } from "./connection";
-import { createEventEmitter, type EventEmitter } from "./events";
+import { createEventEmitter, type EventEmitter } from "./utils/events";
+import { createLogger } from "./utils/logger";
 import {
   type ConnackPacket,
   PacketType,
@@ -48,6 +49,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     pub: new Map(),
   };
   const events = createEventEmitter<MqttEvents>();
+  const log = createLogger(options);
   const connection = createConnection(options);
 
   connection.on("connect", (packet) => {
@@ -61,7 +63,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   connection.on("packet", (packet) => {
     switch (packet.type) {
       case PacketType.SUBACK: {
-        console.log("SUBACK", packet);
+        log.debug("SUBACK", packet);
         const request = pending.sub.get(packet.messageId);
 
         if (request) {
@@ -78,7 +80,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
         break;
       }
       case PacketType.PUBACK: {
-        console.log("PUBACK", packet);
+        log.debug("PUBACK", packet);
         const request = pending.pub.get(packet.messageId);
 
         if (request) {
@@ -170,7 +172,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     isConnected: () => connection.isConnected(),
     connect,
     close: () => {
-      console.log("closing from up above");
+      log.debug("closing from up above");
       connection.close();
     },
   };
