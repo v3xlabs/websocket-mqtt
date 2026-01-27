@@ -89,7 +89,7 @@ export const createConnection = (options: ConnectionOptions) => {
   };
 
   const startPingInterval = (): void => {
-    log.debug("starting ping interval");
+    log("starting ping interval");
 
     if (keepalive > 0) {
       const pingIntervalMs = (keepalive * 1000) / 2;
@@ -101,21 +101,21 @@ export const createConnection = (options: ConnectionOptions) => {
   };
 
   const send = (packet: OutgoingPacket): void => {
-    log.debug("sending packet", packet);
+    log("sending packet", packet);
     sendRaw(encodePacket(packet));
   };
 
   const sendRaw = (data: Uint8Array): void => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      log.debug("sending raw data", data);
+      log("sending raw data", data);
       ws.send(data);
     } else {
-      log.debug("not sending raw data", data);
+      log("not sending raw data", data);
     }
   };
 
   const close = () => {
-    log.debug("closing connection");
+    log("closing connection");
 
     if (connected && ws) {
       sendRaw(encodeDisconnect());
@@ -152,7 +152,7 @@ export const createConnection = (options: ConnectionOptions) => {
     let receiveBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
 
     const handlePacket2 = (packet: IncomingPacket) => {
-      log.debug("handlePacket2", packet);
+      log("handlePacket2", packet);
 
       switch (packet.type) {
         case PacketType.CONNACK:
@@ -160,7 +160,7 @@ export const createConnection = (options: ConnectionOptions) => {
             connected = true;
             startPingInterval();
             events.emit("connect", packet);
-            log.debug("connected");
+            log("connected");
           } else {
             const message = getConnackErrorMessage(packet.returnCode);
 
@@ -171,7 +171,7 @@ export const createConnection = (options: ConnectionOptions) => {
 
           break;
         case PacketType.PUBLISH:
-          log.debug("received a publish packet");
+          log("received a publish packet");
 
           if (packet.qos === 1 && packet.messageId !== undefined) {
             send({ type: PacketType.PUBACK, messageId: packet.messageId });
@@ -181,17 +181,17 @@ export const createConnection = (options: ConnectionOptions) => {
 
           break;
         case PacketType.PINGRESP:
-          log.debug("PINGRESP");
+          log("PINGRESP");
           break;
         default:
-          log.debug("received a default packet");
+          log("received a default packet");
           events.emit("packet", packet);
           break;
       }
     };
 
     ws.onmessage = (event) => {
-      log.debug("onmessage");
+      log("onmessage");
       const data = new Uint8Array(event.data as ArrayBuffer);
       const combined = new Uint8Array(receiveBuffer.length + data.length);
 
@@ -203,10 +203,10 @@ export const createConnection = (options: ConnectionOptions) => {
 
       receiveBuffer = remaining;
 
-      log.debug("packets to process", packets.length);
+      log("packets to process", packets.length);
 
       for (const packet of packets) {
-        log.debug("packet", packet);
+        log("packet", packet);
 
         handlePacket2(packet);
       }
@@ -217,7 +217,7 @@ export const createConnection = (options: ConnectionOptions) => {
     };
 
     ws.onclose = () => {
-      log.debug("ws:onclose");
+      log("ws:onclose");
       close();
     };
   };

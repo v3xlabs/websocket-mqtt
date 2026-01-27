@@ -63,7 +63,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   connection.on("packet", (packet) => {
     switch (packet.type) {
       case PacketType.SUBACK: {
-        log.debug("SUBACK", packet);
+        log("SUBACK", packet);
         const request = pending.sub.get(packet.messageId);
 
         if (request) {
@@ -80,7 +80,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
         break;
       }
       case PacketType.PUBACK: {
-        log.debug("PUBACK", packet);
+        log("PUBACK", packet);
         const request = pending.pub.get(packet.messageId);
 
         if (request) {
@@ -172,7 +172,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     isConnected: () => connection.isConnected(),
     connect,
     close: () => {
-      log.debug("closing from up above");
+      log("closing from up above");
       connection.close();
     },
   };
