@@ -70,6 +70,7 @@ export const createConnection = (options: ConnectionOptions) => {
     keepalive = DEFAULT_KEEPALIVE_SECONDS,
     clean = true,
     url,
+    signal,
   } = options;
   const will = options.will
     ? {
@@ -221,6 +222,11 @@ export const createConnection = (options: ConnectionOptions) => {
       close();
     };
   };
+
+  signal?.addEventListener("abort", () => {
+    log("abort signal received");
+    close();
+  });
 
   return {
     close,
