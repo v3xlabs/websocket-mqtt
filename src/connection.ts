@@ -63,6 +63,23 @@ export const createConnection = (
   let pingInterval: ReturnType<typeof setInterval> | null = null;
   let ws: WebSocket | null = null;
 
+  const {
+    clientId = DEFAULT_CLIENT_ID + Math.random().toString(36).substring(2, 15),
+    username,
+    password,
+    keepalive = DEFAULT_KEEPALIVE_SECONDS,
+    clean = true,
+    url,
+  } = options;
+  const will = options.will
+    ? {
+        topic: options.will.topic,
+        payload: toUint8Array(options.will.payload),
+        qos: options.will.qos ?? QoS.AT_MOST_ONCE,
+        retain: options.will.retain ?? false,
+      }
+    : undefined;
+
   const nextMessageId = (): number => {
     const messageId = lastMessageId;
 
@@ -72,8 +89,10 @@ export const createConnection = (
   };
 
   const startPingInterval = (): void => {
-    if (options.keepalive && options.keepalive > 0) {
-      const pingIntervalMs = (options.keepalive * 1000) / 2;
+    console.log("starting ping interval");
+
+    if (keepalive > 0) {
+      const pingIntervalMs = (keepalive * 1000) / 2;
 
       pingInterval = setInterval(() => {
         sendRaw(encodePingreq());
@@ -90,10 +109,14 @@ export const createConnection = (
     if (ws && ws.readyState === WebSocket.OPEN) {
       console.log("sending raw data", data);
       ws.send(data);
+    } else {
+      console.log("not sending raw data", data);
     }
   };
 
   const close = () => {
+    console.log("closing connection");
+
     if (connected && ws) {
       sendRaw(encodeDisconnect());
     }
@@ -108,28 +131,19 @@ export const createConnection = (
   };
 
   const open = () => {
-    ws = new WebSocket(options.url, ["mqtt"]);
+    ws = new WebSocket(url, ["mqtt"]);
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
       //   sendConnect();
       const packet = encodeConnect({
         type: PacketType.CONNECT,
-        clientId:
-          options.clientId ??
-          DEFAULT_CLIENT_ID + Math.random().toString(36).substring(2, 15),
-        username: options.username,
-        password: options.password,
-        keepalive: options.keepalive ?? DEFAULT_KEEPALIVE_SECONDS,
-        clean: options.clean ?? true,
-        will: options.will
-          ? {
-              topic: options.will.topic,
-              payload: toUint8Array(options.will.payload),
-              qos: options.will.qos ?? QoS.AT_MOST_ONCE,
-              retain: options.will.retain ?? false,
-            }
-          : undefined,
+        clientId,
+        username,
+        password,
+        keepalive,
+        clean,
+        will,
       });
 
       sendRaw(packet);
@@ -146,15 +160,19 @@ export const createConnection = (
             connected = true;
             startPingInterval();
             events.emit("connect", packet);
+            console.log("connected");
           } else {
             const message = getConnackErrorMessage(packet.returnCode);
 
+            console.error(message);
             events.emit("error", new Error(message));
             close();
           }
 
           break;
         case PacketType.PUBLISH:
+          console.log("received a publish packet!");
+
           if (packet.qos === 1 && packet.messageId !== undefined) {
             send({ type: PacketType.PUBACK, messageId: packet.messageId });
           }
@@ -163,8 +181,10 @@ export const createConnection = (
 
           break;
         case PacketType.PINGRESP:
+          console.log("PINGRESP");
           break;
         default:
+          console.log("received a default packet!");
           handlePacket(packet);
           break;
       }
@@ -197,6 +217,7 @@ export const createConnection = (
     };
 
     ws.onclose = () => {
+      console.log("ws:onclose");
       close();
     };
   };
