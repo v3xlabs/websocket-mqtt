@@ -12,6 +12,7 @@ import {
 } from "./constants";
 import type {
   ConnectPacket,
+  OutgoingPacket,
   PubackPacket,
   PublishPacket,
   SubscribePacket,
@@ -118,3 +119,22 @@ export function encodePingreq(): Uint8Array {
 export function encodeDisconnect(): Uint8Array {
   return new Uint8Array([PacketType.DISCONNECT << 4, 0]);
 }
+
+export const encodePacket = (packet: OutgoingPacket): Uint8Array => {
+  switch (packet.type) {
+    case PacketType.CONNECT:
+      return encodeConnect(packet);
+    case PacketType.SUBSCRIBE:
+      return encodeSubscribe(packet);
+    case PacketType.PUBLISH:
+      return encodePublish(packet);
+    case PacketType.PUBACK:
+      return encodePuback(packet);
+    // case PacketType.DISCONNECT:
+    //   return encodeDisconnect();
+    // case PacketType.PINGREQ:
+    //   return encodePingreq();
+    default:
+      throw new Error(`Unknown packet type: ${packet["type"]}`);
+  }
+};

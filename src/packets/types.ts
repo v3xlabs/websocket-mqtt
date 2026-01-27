@@ -93,3 +93,11 @@ export type IncomingPacket =
   | PubackPacket
   | SubackPacket
   | PingrespPacket;
+
+export type OutgoingPacket =
+  | ConnectPacket
+  | SubscribePacket
+  | PublishPacket
+  | PubackPacket
+  | DisconnectPacket
+  | PingreqPacket;

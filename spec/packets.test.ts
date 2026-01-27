@@ -12,6 +12,9 @@ import {
 } from "../src/packets";
 import { createPacketReader, createPacketWriter } from "../src/utils/buffer";
 
+const TEST_CLIENT = "test-client";
+const TEST_TOPIC = "test/topic";
+
 describe("Buffer Utilities", () => {
   test("writer/reader uint16", () => {
     const values = [0, 1, 255, 256, 65535];
@@ -76,7 +79,7 @@ describe("Packet Encoding", () => {
   test("encodeConnect", () => {
     const packet = encodeConnect({
       type: 1,
-      clientId: "test-client",
+      clientId: TEST_CLIENT,
       keepalive: 60,
       clean: true,
     });
@@ -85,13 +88,13 @@ describe("Packet Encoding", () => {
     const packetStr = new TextDecoder().decode(packet);
 
     expect(packetStr).toContain("MQTT");
-    expect(packetStr).toContain("test-client");
+    expect(packetStr).toContain(TEST_CLIENT);
   });
 
   test("encodeConnect with username and password", () => {
     const packet = encodeConnect({
       type: 1,
-      clientId: "test-client",
+      clientId: TEST_CLIENT,
       username: "user",
       password: "pass",
       keepalive: 60,
@@ -108,7 +111,7 @@ describe("Packet Encoding", () => {
     const packet = encodeSubscribe({
       type: 8,
       messageId: 1,
-      subscriptions: [{ topic: "test/topic", qos: 0 }],
+      subscriptions: [{ topic: TEST_TOPIC, qos: 0 }],
     });
 
     expect(packet[0]).toBe((PacketType.SUBSCRIBE << 4) | 0x02);
@@ -117,7 +120,7 @@ describe("Packet Encoding", () => {
   test("encodePublish QoS 0", () => {
     const packet = encodePublish({
       type: 3,
-      topic: "test/topic",
+      topic: TEST_TOPIC,
       payload: new TextEncoder().encode("hello"),
       qos: 0,
       retain: false,
@@ -131,7 +134,7 @@ describe("Packet Encoding", () => {
   test("encodePublish QoS 1", () => {
     const packet = encodePublish({
       type: 3,
-      topic: "test/topic",
+      topic: TEST_TOPIC,
       payload: new TextEncoder().encode("hello"),
       qos: 1,
       retain: false,

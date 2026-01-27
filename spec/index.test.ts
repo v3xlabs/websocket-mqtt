@@ -4,12 +4,21 @@ import {
 } from "mqtt";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import { connectAsync, MqttClient } from "../src";
+import { createMqtt, MqttClient } from "../src";
+import { ConnectionOptions } from "../src/connection";
 
 const TEST_BROKER = "wss://broker.itdata.nu/mqtt";
 
 function generateTopic(): string {
   return `websocket-mqtt/test/${Date.now()}/${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function connectAsync(options: ConnectionOptions): Promise<MqttClient> {
+  const client = createMqtt({ ...options, debug: true });
+
+  await client.connect();
+
+  return client;
 }
 
 function waitForMessage(
@@ -37,10 +46,12 @@ function waitForMessage(
 
 describe("Connection Tests", () => {
   test("our library connects successfully", async () => {
-    const client = await connectAsync(TEST_BROKER, {});
+    const client = createMqtt({ url: TEST_BROKER });
 
-    expect(client.isConnected).toBe(true);
-    await client.endAsync();
+    await client.connect();
+
+    expect(client.isConnected()).toBe(true);
+    await client.close();
   });
 
   test("standard library connects successfully", async () => {
@@ -55,15 +66,15 @@ describe("Connection Tests", () => {
     const clientId1 = `test-ours-${Date.now()}`;
     const clientId2 = `test-std-${Date.now()}`;
 
-    const ours = await connectAsync(TEST_BROKER, { clientId: clientId1 });
+    const ours = await connectAsync({ clientId: clientId1, url: TEST_BROKER });
     const std = connectStandard(TEST_BROKER, { clientId: clientId2 });
 
     await new Promise<void>((resolve) => std.on("connect", () => resolve()));
 
-    expect(ours.isConnected).toBe(true);
+    expect(ours.isConnected()).toBe(true);
     expect(std.connected).toBe(true);
 
-    await ours.endAsync();
+    await ours.close();
     std.end();
   });
 });
@@ -73,7 +84,7 @@ describe("Cross-Library Communication", () => {
   let stdClient: StandardMqttClient;
 
   beforeEach(async () => {
-    ourClient = await connectAsync(TEST_BROKER, {});
+    ourClient = await connectAsync({ url: TEST_BROKER });
     stdClient = connectStandard(TEST_BROKER, {});
     await new Promise<void>((resolve) =>
       stdClient.on("connect", () => resolve()),
@@ -81,7 +92,7 @@ describe("Cross-Library Communication", () => {
   });
 
   afterEach(async () => {
-    await ourClient.endAsync();
+    await ourClient.close();
     stdClient.end();
   });
 
@@ -95,7 +106,7 @@ describe("Cross-Library Communication", () => {
 
     const messagePromise = waitForMessage(stdClient, topic);
 
-    await ourClient.publishAsync(topic, message);
+    await ourClient.publish(topic, message);
 
     const received = await messagePromise;
 
@@ -107,7 +118,7 @@ describe("Cross-Library Communication", () => {
     const topic = generateTopic();
     const message = "Hello from standard library!";
 
-    await ourClient.subscribeAsync(topic);
+    await ourClient.subscribe(topic);
 
     const messagePromise = waitForMessage(ourClient, topic);
 
@@ -126,7 +137,7 @@ describe("Cross-Library Communication", () => {
     const message2 = "Message from standard to ours";
 
     // Subscribe both
-    await ourClient.subscribeAsync(topic2);
+    await ourClient.subscribe(topic2);
     await new Promise<void>((resolve) => {
       stdClient.subscribe(topic1, () => resolve());
     });
@@ -135,7 +146,7 @@ describe("Cross-Library Communication", () => {
     const promise1 = waitForMessage(stdClient, topic1);
     const promise2 = waitForMessage(ourClient, topic2);
 
-    await ourClient.publishAsync(topic1, message1);
+    await ourClient.publish(topic1, message1);
     stdClient.publish(topic2, message2);
 
     const [received1, received2] = await Promise.all([promise1, promise2]);
@@ -150,7 +161,7 @@ describe("QoS Behavior Comparison", () => {
   let stdClient: StandardMqttClient;
 
   beforeEach(async () => {
-    ourClient = await connectAsync(TEST_BROKER, {});
+    ourClient = await connectAsync({ url: TEST_BROKER });
     stdClient = connectStandard(TEST_BROKER, {});
     await new Promise<void>((resolve) =>
       stdClient.on("connect", () => resolve()),
@@ -158,7 +169,7 @@ describe("QoS Behavior Comparison", () => {
   });
 
   afterEach(async () => {
-    await ourClient.endAsync();
+    await ourClient.close();
     stdClient.end();
   });
 
@@ -172,7 +183,7 @@ describe("QoS Behavior Comparison", () => {
 
     const messagePromise = waitForMessage(stdClient, topic);
 
-    await ourClient.publishAsync(topic, message, { qos: 0 });
+    await ourClient.publish(topic, message, { qos: 0 });
 
     const received = await messagePromise;
 
@@ -189,7 +200,7 @@ describe("QoS Behavior Comparison", () => {
 
     const messagePromise = waitForMessage(stdClient, topic);
 
-    await ourClient.publishAsync(topic, message, { qos: 1 });
+    await ourClient.publish(topic, message, { qos: 1 });
 
     const received = await messagePromise;
 
@@ -200,7 +211,7 @@ describe("QoS Behavior Comparison", () => {
     const topic = generateTopic();
     const message = "QoS 1 from standard";
 
-    await ourClient.subscribeAsync(topic, 1);
+    await ourClient.subscribe(topic, 1);
 
     const messagePromise = waitForMessage(ourClient, topic);
 
@@ -222,7 +233,7 @@ describe("Subscribe Behavior Comparison", () => {
   let stdClient: StandardMqttClient;
 
   beforeEach(async () => {
-    ourClient = await connectAsync(TEST_BROKER, {});
+    ourClient = await connectAsync({ url: TEST_BROKER });
     stdClient = connectStandard(TEST_BROKER, {});
     await new Promise<void>((resolve) =>
       stdClient.on("connect", () => resolve()),
@@ -230,7 +241,7 @@ describe("Subscribe Behavior Comparison", () => {
   });
 
   afterEach(async () => {
-    await ourClient.endAsync();
+    await ourClient.close();
     stdClient.end();
   });
 
@@ -244,7 +255,7 @@ describe("Subscribe Behavior Comparison", () => {
     );
 
     // Both subscribe
-    await ourClient.subscribeAsync(topic);
+    await ourClient.subscribe(topic);
     await new Promise<void>((resolve) => {
       stdClient.subscribe(topic, () => resolve());
     });
@@ -271,7 +282,7 @@ describe("Message Ordering", () => {
   let stdClient: StandardMqttClient;
 
   beforeEach(async () => {
-    ourClient = await connectAsync(TEST_BROKER, {});
+    ourClient = await connectAsync({ url: TEST_BROKER });
     stdClient = connectStandard(TEST_BROKER, {});
     await new Promise<void>((resolve) =>
       stdClient.on("connect", () => resolve()),
@@ -279,7 +290,7 @@ describe("Message Ordering", () => {
   });
 
   afterEach(async () => {
-    await ourClient.endAsync();
+    await ourClient.close();
     stdClient.end();
   });
 
@@ -303,7 +314,7 @@ describe("Message Ordering", () => {
     });
 
     for (const msg of messages) {
-      await ourClient.publishAsync(topic, msg);
+      await ourClient.publish(topic, msg);
     }
 
     await allReceived;
@@ -315,7 +326,7 @@ describe("Message Ordering", () => {
     const messages = ["first", "second", "third", "fourth", "fifth"];
     const received: string[] = [];
 
-    await ourClient.subscribeAsync(topic);
+    await ourClient.subscribe(topic);
 
     const allReceived = new Promise<void>((resolve) => {
       ourClient.on("message", (_topic: unknown, payload: unknown) => {
@@ -346,7 +357,7 @@ describe("Binary Payload Handling", () => {
   let stdClient: StandardMqttClient;
 
   beforeEach(async () => {
-    ourClient = await connectAsync(TEST_BROKER, {});
+    ourClient = await connectAsync({ url: TEST_BROKER });
     stdClient = connectStandard(TEST_BROKER, {});
     await new Promise<void>((resolve) =>
       stdClient.on("connect", () => resolve()),
@@ -354,7 +365,7 @@ describe("Binary Payload Handling", () => {
   });
 
   afterEach(async () => {
-    await ourClient.endAsync();
+    await ourClient.close();
     stdClient.end();
   });
 
@@ -375,7 +386,7 @@ describe("Binary Payload Handling", () => {
       });
     });
 
-    await ourClient.publishAsync(topic, binaryData);
+    await ourClient.publish(topic, binaryData);
 
     const received = await messagePromise;
 
@@ -386,7 +397,7 @@ describe("Binary Payload Handling", () => {
     const topic = generateTopic();
     const binaryData = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
 
-    await ourClient.subscribeAsync(topic);
+    await ourClient.subscribe(topic);
 
     const messagePromise = new Promise<Uint8Array>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("Timeout")), 5000);
@@ -410,10 +421,10 @@ describe("Retained Messages", () => {
     const topic = generateTopic();
     const message = "Retained message";
 
-    const publisher = await connectAsync(TEST_BROKER, {});
+    const publisher = await connectAsync({ url: TEST_BROKER });
 
-    await publisher.publishAsync(topic, message, { retain: true });
-    await publisher.endAsync();
+    await publisher.publish(topic, message, { retain: true });
+    await publisher.close();
 
     // Small delay to ensure broker has processed retained message
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -444,7 +455,7 @@ describe("Retained Messages", () => {
 
 describe("Error Handling Comparison", () => {
   test("both libraries handle disconnect gracefully", async () => {
-    const ourClient = await connectAsync(TEST_BROKER, {});
+    const ourClient = await connectAsync({ url: TEST_BROKER });
     const stdClient = connectStandard(TEST_BROKER, {});
 
     await new Promise<void>((resolve) =>
@@ -452,7 +463,7 @@ describe("Error Handling Comparison", () => {
     );
 
     // Both should disconnect without throwing
-    await expect(ourClient.endAsync()).resolves.toBeUndefined();
+    expect(ourClient.close()).toBeUndefined();
     await new Promise<void>((resolve) => {
       stdClient.end(false, {}, () => resolve());
     });
