@@ -1,14 +1,18 @@
-import { Connection, ConnectionOptions, createConnection } from "./connection";
-import { createEventEmitter, type EventEmitter } from "./utils/events";
-import { createLogger } from "./utils/logger";
+import {
+  Connection,
+  ConnectionOptions,
+  createConnection,
+} from "./connection.js";
 import {
   type ConnackPacket,
   PacketType,
   type PublishPacket,
   QoS,
   type QoSLevel,
-} from "./packets";
-import { toUint8Array } from "./utils/buffer";
+} from "./packets/index.js";
+import { toUint8Array } from "./utils/buffer.js";
+import { createEventEmitter, type EventEmitter } from "./utils/events.js";
+import { createLogger } from "./utils/logger.js";
 
 export type MqttEvents = {
   connect: [packet: ConnackPacket];

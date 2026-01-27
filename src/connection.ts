@@ -1,6 +1,9 @@
-import { QoSLevel } from ".";
-import { createEventEmitter } from "./utils/events";
-import { createLogger, LogOptions } from "./utils/logger";
+import {
+  encodeConnect,
+  encodeDisconnect,
+  encodePacket,
+  encodePingreq,
+} from "./packets/encode.js";
 import {
   ConnackPacket,
   decodeAll,
@@ -10,14 +13,11 @@ import {
   PacketType,
   PublishPacket,
   QoS,
-} from "./packets";
-import {
-  encodeConnect,
-  encodeDisconnect,
-  encodePacket,
-  encodePingreq,
-} from "./packets/encode";
-import { toUint8Array } from "./utils/buffer";
+  QoSLevel,
+} from "./packets/index.js";
+import { toUint8Array } from "./utils/buffer.js";
+import { createEventEmitter } from "./utils/events.js";
+import { createLogger, type LogOptions } from "./utils/logger.js";
 
 export type ConnectionOptions = {
   url: string;
