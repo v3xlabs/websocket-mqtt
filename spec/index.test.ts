@@ -160,316 +160,316 @@ describe("Cross-Library Communication", () => {
   });
 });
 
-// describe("QoS Behavior Comparison", () => {
-//   let ourClient: MqttClient;
-//   let stdClient: StandardMqttClient;
+describe("QoS Behavior Comparison", () => {
+  let ourClient: MqttClient;
+  let stdClient: StandardMqttClient;
 
-//   beforeEach(async () => {
-//     ourClient = await connectAsync({ url: TEST_BROKER });
-//     stdClient = connectStandard(TEST_BROKER, {});
-//     await new Promise<void>((resolve) =>
-//       stdClient.on("connect", () => resolve()),
-//     );
-//   });
+  beforeEach(async () => {
+    ourClient = await connectAsync({ url: TEST_BROKER });
+    stdClient = connectStandard(TEST_BROKER, {});
+    await new Promise<void>((resolve) =>
+      stdClient.on("connect", () => resolve()),
+    );
+  });
 
-//   afterEach(async () => {
-//     await ourClient.close();
-//     stdClient.end();
-//   });
+  afterEach(async () => {
+    await ourClient.close();
+    stdClient.end();
+  });
 
-//   test("QoS 0: our library publishes, standard receives", async () => {
-//     const topic = generateTopic();
-//     const message = "QoS 0 message";
+  test("QoS 0: our library publishes, standard receives", async () => {
+    const topic = generateTopic();
+    const message = "QoS 0 message";
 
-//     await new Promise<void>((resolve) => {
-//       stdClient.subscribe(topic, { qos: 0 }, () => resolve());
-//     });
+    await new Promise<void>((resolve) => {
+      stdClient.subscribe(topic, { qos: 0 }, () => resolve());
+    });
 
-//     const messagePromise = waitForMessage(stdClient, topic);
+    const messagePromise = waitForMessage(stdClient, topic);
 
-//     await ourClient.publish(topic, message, { qos: 0 });
+    await ourClient.publish(topic, message, { qos: 0 });
 
-//     const received = await messagePromise;
+    const received = await messagePromise;
 
-//     expect(received.payload).toBe(message);
-//   });
+    expect(received.payload).toBe(message);
+  });
 
-//   test("QoS 1: our library publishes, standard receives", async () => {
-//     const topic = generateTopic();
-//     const message = "QoS 1 message";
+  test("QoS 1: our library publishes, standard receives", async () => {
+    const topic = generateTopic();
+    const message = "QoS 1 message";
 
-//     await new Promise<void>((resolve) => {
-//       stdClient.subscribe(topic, { qos: 1 }, () => resolve());
-//     });
+    await new Promise<void>((resolve) => {
+      stdClient.subscribe(topic, { qos: 1 }, () => resolve());
+    });
 
-//     const messagePromise = waitForMessage(stdClient, topic);
+    const messagePromise = waitForMessage(stdClient, topic);
 
-//     await ourClient.publish(topic, message, { qos: 1 });
+    await ourClient.publish(topic, message, { qos: 1 });
 
-//     const received = await messagePromise;
+    const received = await messagePromise;
 
-//     expect(received.payload).toBe(message);
-//   });
+    expect(received.payload).toBe(message);
+  });
 
-//   test("QoS 1: standard library publishes, our library receives", async () => {
-//     const topic = generateTopic();
-//     const message = "QoS 1 from standard";
+  test("QoS 1: standard library publishes, our library receives", async () => {
+    const topic = generateTopic();
+    const message = "QoS 1 from standard";
 
-//     await ourClient.subscribe(topic, 1);
+    await ourClient.subscribe(topic, 1);
 
-//     const messagePromise = waitForMessage(ourClient, topic);
+    const messagePromise = waitForMessage(ourClient, topic);
 
-//     await new Promise<void>((resolve, reject) => {
-//       stdClient.publish(topic, message, { qos: 1 }, (err) => {
-//         if (err) reject(err);
-//         else resolve();
-//       });
-//     });
+    await new Promise<void>((resolve, reject) => {
+      stdClient.publish(topic, message, { qos: 1 }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
-//     const received = await messagePromise;
+    const received = await messagePromise;
 
-//     expect(received.payload).toBe(message);
-//   });
-// });
+    expect(received.payload).toBe(message);
+  });
+});
 
-// describe("Subscribe Behavior Comparison", () => {
-//   let ourClient: MqttClient;
-//   let stdClient: StandardMqttClient;
+describe("Subscribe Behavior Comparison", () => {
+  let ourClient: MqttClient;
+  let stdClient: StandardMqttClient;
 
-//   beforeEach(async () => {
-//     ourClient = await connectAsync({ url: TEST_BROKER });
-//     stdClient = connectStandard(TEST_BROKER, {});
-//     await new Promise<void>((resolve) =>
-//       stdClient.on("connect", () => resolve()),
-//     );
-//   });
+  beforeEach(async () => {
+    ourClient = await connectAsync({ url: TEST_BROKER });
+    stdClient = connectStandard(TEST_BROKER, {});
+    await new Promise<void>((resolve) =>
+      stdClient.on("connect", () => resolve()),
+    );
+  });
 
-//   afterEach(async () => {
-//     await ourClient.close();
-//     stdClient.end();
-//   });
+  afterEach(async () => {
+    await ourClient.close();
+    stdClient.end();
+  });
 
-//   test("both libraries receive same message on same topic", async () => {
-//     const topic = generateTopic();
-//     const message = "Shared message";
-//     const publisher = connectStandard(TEST_BROKER, {});
-
-//     await new Promise<void>((resolve) =>
-//       publisher.on("connect", () => resolve()),
-//     );
-
-//     // Both subscribe
-//     await ourClient.subscribe(topic);
-//     await new Promise<void>((resolve) => {
-//       stdClient.subscribe(topic, () => resolve());
-//     });
-
-//     // Wait a bit for subscriptions to be established
-//     await new Promise((resolve) => setTimeout(resolve, 100));
-
-//     const promise1 = waitForMessage(ourClient, topic);
-//     const promise2 = waitForMessage(stdClient, topic);
-
-//     publisher.publish(topic, message);
-
-//     const [received1, received2] = await Promise.all([promise1, promise2]);
-
-//     expect(received1.payload).toBe(message);
-//     expect(received2.payload).toBe(message);
-
-//     publisher.end();
-//   });
-// });
-
-// describe("Message Ordering", () => {
-//   let ourClient: MqttClient;
-//   let stdClient: StandardMqttClient;
-
-//   beforeEach(async () => {
-//     ourClient = await connectAsync({ url: TEST_BROKER });
-//     stdClient = connectStandard(TEST_BROKER, {});
-//     await new Promise<void>((resolve) =>
-//       stdClient.on("connect", () => resolve()),
-//     );
-//   });
-
-//   afterEach(async () => {
-//     await ourClient.close();
-//     stdClient.end();
-//   });
-
-//   test("messages arrive in order when published by our library", async () => {
-//     const topic = generateTopic();
-//     const messages = ["first", "second", "third", "fourth", "fifth"];
-//     const received: string[] = [];
-
-//     await new Promise<void>((resolve) => {
-//       stdClient.subscribe(topic, () => resolve());
-//     });
-
-//     const allReceived = new Promise<void>((resolve) => {
-//       stdClient.on("message", (_topic: string, payload: Buffer) => {
-//         received.push(payload.toString());
-
-//         if (received.length === messages.length) {
-//           resolve();
-//         }
-//       });
-//     });
+  test("both libraries receive same message on same topic", async () => {
+    const topic = generateTopic();
+    const message = "Shared message";
+    const publisher = connectStandard(TEST_BROKER, {});
+
+    await new Promise<void>((resolve) =>
+      publisher.on("connect", () => resolve()),
+    );
+
+    // Both subscribe
+    await ourClient.subscribe(topic);
+    await new Promise<void>((resolve) => {
+      stdClient.subscribe(topic, () => resolve());
+    });
+
+    // Wait a bit for subscriptions to be established
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const promise1 = waitForMessage(ourClient, topic);
+    const promise2 = waitForMessage(stdClient, topic);
+
+    publisher.publish(topic, message);
+
+    const [received1, received2] = await Promise.all([promise1, promise2]);
+
+    expect(received1.payload).toBe(message);
+    expect(received2.payload).toBe(message);
+
+    publisher.end();
+  });
+});
+
+describe("Message Ordering", () => {
+  let ourClient: MqttClient;
+  let stdClient: StandardMqttClient;
+
+  beforeEach(async () => {
+    ourClient = await connectAsync({ url: TEST_BROKER });
+    stdClient = connectStandard(TEST_BROKER, {});
+    await new Promise<void>((resolve) =>
+      stdClient.on("connect", () => resolve()),
+    );
+  });
+
+  afterEach(async () => {
+    await ourClient.close();
+    stdClient.end();
+  });
+
+  test("messages arrive in order when published by our library", async () => {
+    const topic = generateTopic();
+    const messages = ["first", "second", "third", "fourth", "fifth"];
+    const received: string[] = [];
+
+    await new Promise<void>((resolve) => {
+      stdClient.subscribe(topic, () => resolve());
+    });
+
+    const allReceived = new Promise<void>((resolve) => {
+      stdClient.on("message", (_topic: string, payload: Buffer) => {
+        received.push(payload.toString());
+
+        if (received.length === messages.length) {
+          resolve();
+        }
+      });
+    });
 
-//     for (const msg of messages) {
-//       await ourClient.publish(topic, msg);
-//     }
+    for (const msg of messages) {
+      await ourClient.publish(topic, msg);
+    }
 
-//     await allReceived;
-//     expect(received).toEqual(messages);
-//   });
-
-//   test("messages arrive in order when published by standard library", async () => {
-//     const topic = generateTopic();
-//     const messages = ["first", "second", "third", "fourth", "fifth"];
-//     const received: string[] = [];
-
-//     await ourClient.subscribe(topic);
+    await allReceived;
+    expect(received).toEqual(messages);
+  });
+
+  test("messages arrive in order when published by standard library", async () => {
+    const topic = generateTopic();
+    const messages = ["first", "second", "third", "fourth", "fifth"];
+    const received: string[] = [];
+
+    await ourClient.subscribe(topic);
 
-//     const allReceived = new Promise<void>((resolve) => {
-//       ourClient.on("message", (_topic: unknown, payload: unknown) => {
-//         const payloadStr =
-//           payload instanceof Uint8Array
-//             ? new TextDecoder().decode(payload)
-//             : String(payload);
+    const allReceived = new Promise<void>((resolve) => {
+      ourClient.on("message", (_topic: unknown, payload: unknown) => {
+        const payloadStr =
+          payload instanceof Uint8Array
+            ? new TextDecoder().decode(payload)
+            : String(payload);
 
-//         received.push(payloadStr);
+        received.push(payloadStr);
 
-//         if (received.length === messages.length) {
-//           resolve();
-//         }
-//       });
-//     });
+        if (received.length === messages.length) {
+          resolve();
+        }
+      });
+    });
 
-//     for (const msg of messages) {
-//       stdClient.publish(topic, msg);
-//     }
+    for (const msg of messages) {
+      stdClient.publish(topic, msg);
+    }
 
-//     await allReceived;
-//     expect(received).toEqual(messages);
-//   });
-// });
+    await allReceived;
+    expect(received).toEqual(messages);
+  });
+});
 
-// describe("Binary Payload Handling", () => {
-//   let ourClient: MqttClient;
-//   let stdClient: StandardMqttClient;
+describe("Binary Payload Handling", () => {
+  let ourClient: MqttClient;
+  let stdClient: StandardMqttClient;
 
-//   beforeEach(async () => {
-//     ourClient = await connectAsync({ url: TEST_BROKER });
-//     stdClient = connectStandard(TEST_BROKER, {});
-//     await new Promise<void>((resolve) =>
-//       stdClient.on("connect", () => resolve()),
-//     );
-//   });
+  beforeEach(async () => {
+    ourClient = await connectAsync({ url: TEST_BROKER });
+    stdClient = connectStandard(TEST_BROKER, {});
+    await new Promise<void>((resolve) =>
+      stdClient.on("connect", () => resolve()),
+    );
+  });
 
-//   afterEach(async () => {
-//     await ourClient.close();
-//     stdClient.end();
-//   });
+  afterEach(async () => {
+    await ourClient.close();
+    stdClient.end();
+  });
 
-//   test("binary data from our library to standard", async () => {
-//     const topic = generateTopic();
-//     const binaryData = new Uint8Array([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
-
-//     await new Promise<void>((resolve) => {
-//       stdClient.subscribe(topic, () => resolve());
-//     });
-
-//     const messagePromise = new Promise<Buffer>((resolve, reject) => {
-//       const timer = setTimeout(() => reject(new Error("Timeout")), 5000);
-
-//       stdClient.on("message", (_topic: string, payload: Buffer) => {
-//         clearTimeout(timer);
-//         resolve(payload);
-//       });
-//     });
-
-//     await ourClient.publish(topic, binaryData);
-
-//     const received = await messagePromise;
-
-//     expect(Array.from(received)).toEqual(Array.from(binaryData));
-//   });
-
-//   test("binary data from standard library to ours", async () => {
-//     const topic = generateTopic();
-//     const binaryData = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
-
-//     await ourClient.subscribe(topic);
-
-//     const messagePromise = new Promise<Uint8Array>((resolve, reject) => {
-//       const timer = setTimeout(() => reject(new Error("Timeout")), 5000);
-
-//       ourClient.on("message", (_topic: unknown, payload: unknown) => {
-//         clearTimeout(timer);
-//         resolve(payload as Uint8Array);
-//       });
-//     });
-
-//     stdClient.publish(topic, binaryData);
-
-//     const received = await messagePromise;
-
-//     expect(Array.from(received)).toEqual(Array.from(binaryData));
-//   });
-// });
-
-// describe("Retained Messages", () => {
-//   test("our library publishes retained, standard receives on subscribe", async () => {
-//     const topic = generateTopic();
-//     const message = "Retained message";
-
-//     const publisher = await connectAsync({ url: TEST_BROKER });
-
-//     await publisher.publish(topic, message, { retain: true });
-//     await publisher.close();
-
-//     // Small delay to ensure broker has processed retained message
-//     await new Promise((resolve) => setTimeout(resolve, 200));
-
-//     const subscriber = connectStandard(TEST_BROKER, {});
-
-//     await new Promise<void>((resolve) =>
-//       subscriber.on("connect", () => resolve()),
-//     );
-
-//     const messagePromise = waitForMessage(subscriber, topic);
-
-//     await new Promise<void>((resolve) => {
-//       subscriber.subscribe(topic, () => resolve());
-//     });
-
-//     const received = await messagePromise;
-
-//     expect(received.payload).toBe(message);
-
-//     // Clean up retained message
-//     await new Promise<void>((resolve) => {
-//       subscriber.publish(topic, "", { retain: true }, () => resolve());
-//     });
-//     subscriber.end();
-//   });
-// });
-
-// describe("Error Handling Comparison", () => {
-//   test("both libraries handle disconnect gracefully", async () => {
-//     const ourClient = await connectAsync({ url: TEST_BROKER });
-//     const stdClient = connectStandard(TEST_BROKER, {});
-
-//     await new Promise<void>((resolve) =>
-//       stdClient.on("connect", () => resolve()),
-//     );
-
-//     // Both should disconnect without throwing
-//     await expect(ourClient.close()).resolves.toBeUndefined();
-//     await new Promise<void>((resolve) => {
-//       stdClient.end(false, {}, () => resolve());
-//     });
-//   });
-// });
+  test("binary data from our library to standard", async () => {
+    const topic = generateTopic();
+    const binaryData = new Uint8Array([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
+
+    await new Promise<void>((resolve) => {
+      stdClient.subscribe(topic, () => resolve());
+    });
+
+    const messagePromise = new Promise<Buffer>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Timeout")), 5000);
+
+      stdClient.on("message", (_topic: string, payload: Buffer) => {
+        clearTimeout(timer);
+        resolve(payload);
+      });
+    });
+
+    await ourClient.publish(topic, binaryData);
+
+    const received = await messagePromise;
+
+    expect(Array.from(received)).toEqual(Array.from(binaryData));
+  });
+
+  test("binary data from standard library to ours", async () => {
+    const topic = generateTopic();
+    const binaryData = Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0xfd]);
+
+    await ourClient.subscribe(topic);
+
+    const messagePromise = new Promise<Uint8Array>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Timeout")), 5000);
+
+      ourClient.on("message", (_topic: unknown, payload: unknown) => {
+        clearTimeout(timer);
+        resolve(payload as Uint8Array);
+      });
+    });
+
+    stdClient.publish(topic, binaryData);
+
+    const received = await messagePromise;
+
+    expect(Array.from(received)).toEqual(Array.from(binaryData));
+  });
+});
+
+describe("Retained Messages", () => {
+  test("our library publishes retained, standard receives on subscribe", async () => {
+    const topic = generateTopic();
+    const message = "Retained message";
+
+    const publisher = await connectAsync({ url: TEST_BROKER });
+
+    await publisher.publish(topic, message, { retain: true });
+    await publisher.close();
+
+    // Small delay to ensure broker has processed retained message
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const subscriber = connectStandard(TEST_BROKER, {});
+
+    await new Promise<void>((resolve) =>
+      subscriber.on("connect", () => resolve()),
+    );
+
+    const messagePromise = waitForMessage(subscriber, topic);
+
+    await new Promise<void>((resolve) => {
+      subscriber.subscribe(topic, () => resolve());
+    });
+
+    const received = await messagePromise;
+
+    expect(received.payload).toBe(message);
+
+    // Clean up retained message
+    await new Promise<void>((resolve) => {
+      subscriber.publish(topic, "", { retain: true }, () => resolve());
+    });
+    subscriber.end();
+  });
+});
+
+describe("Error Handling Comparison", () => {
+  test("both libraries handle disconnect gracefully", async () => {
+    const ourClient = await connectAsync({ url: TEST_BROKER });
+    const stdClient = connectStandard(TEST_BROKER, {});
+
+    await new Promise<void>((resolve) =>
+      stdClient.on("connect", () => resolve()),
+    );
+
+    // Both should disconnect without throwing
+    expect(ourClient.close()).toBeUndefined();
+    await new Promise<void>((resolve) => {
+      stdClient.end(false, {}, () => resolve());
+    });
+  });
+});

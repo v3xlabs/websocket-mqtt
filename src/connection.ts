@@ -54,11 +54,9 @@ export type ConnectionEvents = {
 
 export const DEFAULT_CLIENT_ID = "websocket_mqtt_";
 
-export const createConnection = (
-  options: ConnectionOptions,
-) => {
+export const createConnection = (options: ConnectionOptions) => {
   const events = createEventEmitter<ConnectionEvents>();
-  let lastMessageId = 0;
+  let lastMessageId = 1;
   let connected = false;
   let pingInterval: ReturnType<typeof setInterval> | null = null;
   let ws: WebSocket | null = null;
@@ -83,9 +81,9 @@ export const createConnection = (
   const nextMessageId = (): number => {
     const messageId = lastMessageId;
 
-    lastMessageId = (lastMessageId % 65535) + 1;
+    lastMessageId = (messageId % 65535) + 1;
 
-    return messageId;
+    return lastMessageId;
   };
 
   const startPingInterval = (): void => {

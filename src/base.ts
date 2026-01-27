@@ -50,6 +50,14 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   const events = createEventEmitter<MqttEvents>();
   const connection = createConnection(options);
 
+  connection.on("connect", (packet) => {
+    events.emit("connect", packet);
+  });
+
+  connection.on("message", (topic, payload, packet) => {
+    events.emit("message", topic, payload, packet);
+  });
+
   connection.on("packet", (packet) => {
     switch (packet.type) {
       case PacketType.SUBACK: {
