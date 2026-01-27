@@ -1,0 +1,124 @@
+import { Connection, ConnectionOptions, createConnection } from "./connection";
+import { createEventEmitter, type EventEmitter } from "./events";
+import {
+  type ConnackPacket,
+  PacketType,
+  type PublishPacket,
+  QoS,
+  type QoSLevel,
+} from "./packets";
+import { toUint8Array } from "./utils/buffer";
+
+export type MqttEvents = {
+  connect: [packet: ConnackPacket];
+  message: [topic: string, payload: Uint8Array, packet: PublishPacket];
+  error: [error: unknown];
+  close: [];
+};
+
+export type MqttOptions = {
+  url: string;
+} & ConnectionOptions;
+
+export type MqttClient = EventEmitter<MqttEvents> & {
+  connection: Connection;
+  publish: (
+    topic: string,
+    payload: string | Uint8Array,
+    options?: { qos?: QoSLevel; retain?: boolean },
+  ) => Promise<void>;
+  subscribe: (topic: string, qos?: QoSLevel) => Promise<number[]>;
+};
+
+export type MqttClientInternalRequest<K> = {
+  resolve: (value: K) => void;
+  reject: (err: Error) => void;
+};
+export type MqttClientInternalPending = {
+  sub: Map<number, MqttClientInternalRequest<number[]>>;
+  pub: Map<number, MqttClientInternalRequest<void>>;
+};
+
+export const createMqtt = (options: MqttOptions): MqttClient => {
+  const pending: MqttClientInternalPending = {
+    sub: new Map(),
+    pub: new Map(),
+  };
+  const events = createEventEmitter<MqttEvents>();
+  const connection = createConnection(options, (packet) => {
+    switch (packet.type) {
+      case PacketType.SUBACK: {
+        const request = pending.sub.get(packet.messageId);
+
+        if (request) {
+          pending.sub.delete(packet.messageId);
+          const hasFailure = packet.granted.some((qos) => qos === 0x80);
+
+          if (hasFailure) {
+            request.reject(new Error("Subscription failed"));
+          } else {
+            request.resolve(packet.granted);
+          }
+        }
+
+        break;
+      }
+      case PacketType.PUBACK: {
+        const request = pending.pub.get(packet.messageId);
+
+        if (request) {
+          pending.pub.delete(packet.messageId);
+          request.resolve();
+        }
+
+        break;
+      }
+    }
+  });
+
+  const publish = (
+    topic: string,
+    payload: string | Uint8Array,
+    options?: { qos?: QoSLevel; retain?: boolean },
+  ): Promise<void> => {
+    const qos = options?.qos ?? QoS.AT_MOST_ONCE;
+    const retain = options?.retain ?? false;
+    const messageId = qos > 0 ? connection.nextMessageId() : undefined;
+
+    connection.send({
+      type: PacketType.PUBLISH,
+      topic,
+      payload: toUint8Array(payload),
+      qos,
+      retain,
+      dup: false,
+      messageId,
+    });
+
+    if (qos === 0) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      if (messageId) pending.pub.set(messageId, { resolve, reject });
+    });
+  };
+  const subscribe = (
+    topic: string,
+    qos: QoSLevel = QoS.AT_MOST_ONCE,
+  ): Promise<number[]> => {
+    return new Promise((resolve, reject) => {
+      const messageId = connection.nextMessageId();
+
+      pending.sub.set(messageId, { resolve, reject });
+
+      connection.send({
+        type: PacketType.SUBSCRIBE,
+        messageId,
+        subscriptions: [{ topic, qos }],
+      });
+    });
+  };
+
+  return { ...events, publish, subscribe, connection };
+};
