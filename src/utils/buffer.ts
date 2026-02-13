@@ -1,11 +1,10 @@
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-export function toUint8Array(data: string | Uint8Array): Uint8Array {
-  return typeof data === "string" ? textEncoder.encode(data) : data;
-}
+export const toUint8Array = (data: string | Uint8Array): Uint8Array =>
+  (typeof data === "string" ? textEncoder.encode(data) : data);
 
-export function createPacketWriter(initialSize = 256) {
+export const createPacketWriter = (initialSize = 256) => {
   let buffer = new Uint8Array(initialSize);
   let position = 0;
 
@@ -14,7 +13,7 @@ export function createPacketWriter(initialSize = 256) {
    * If the buffer is too small, it doubles in size or expands to fit the needed bytes,
    * whichever is larger, and copies existing data to the new buffer.
    */
-  function ensureCapacity(bytesNeeded: number): void {
+  const ensureCapacity = (bytesNeeded: number): void => {
     if (position + bytesNeeded > buffer.length) {
       const newSize = Math.max(buffer.length * 2, position + bytesNeeded);
       const newBuffer = new Uint8Array(newSize);
@@ -22,7 +21,7 @@ export function createPacketWriter(initialSize = 256) {
       newBuffer.set(buffer);
       buffer = newBuffer;
     }
-  }
+  };
 
   const writer = {
     writeByte(value: number) {
@@ -88,9 +87,9 @@ export function createPacketWriter(initialSize = 256) {
   };
 
   return writer;
-}
+};
 
-export function createPacketReader(buffer: Uint8Array) {
+export const createPacketReader = (buffer: Uint8Array) => {
   let position = 0;
 
   return {
@@ -155,7 +154,7 @@ export function createPacketReader(buffer: Uint8Array) {
       return data;
     },
   };
-}
+};
 
 export type PacketWriter = ReturnType<typeof createPacketWriter>;
 export type PacketReader = ReturnType<typeof createPacketReader>;

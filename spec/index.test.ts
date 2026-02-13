@@ -9,25 +9,26 @@ import { ConnectionOptions } from "../src/connection";
 
 const TEST_BROKER = "wss://broker.itdata.nu/mqtt";
 
-function generateTopic(): string {
-  return `websocket-mqtt/test/${Date.now()}/${Math.random().toString(36)
+const generateTopic = (): string =>
+  `websocket-mqtt/test/${Date.now()}/${Math.random().toString(36)
     .slice(2, 8)}`;
-}
 
-async function connectAsync(options: ConnectionOptions): Promise<MqttClient> {
+const connectAsync = async (
+  options: ConnectionOptions,
+): Promise<MqttClient> => {
   const client = createMqtt({ ...options, debug: true });
 
   await client.connect();
 
   return client;
-}
+};
 
-function waitForMessage(
+const waitForMessage = (
   client: MqttClient | StandardMqttClient,
   expectedTopic?: string,
   timeout = 5000,
-): Promise<{ topic: string; payload: string; }> {
-  return new Promise((resolve, reject) => {
+): Promise<{ topic: string; payload: string; }> =>
+  new Promise((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error("Message timeout")),
       timeout,
@@ -43,7 +44,6 @@ function waitForMessage(
       }
     });
   });
-}
 
 describe("Connection Tests", () => {
   test("our library connects successfully", async () => {

@@ -18,11 +18,11 @@ import type {
   SubscribePacket,
 } from "./types.js";
 
-function writePacket(
+const writePacket = (
   type: number,
   flags: number,
   writeBody: (writer: PacketWriter) => void,
-): Uint8Array {
+): Uint8Array => {
   const body = createPacketWriter();
 
   writeBody(body);
@@ -34,10 +34,10 @@ function writePacket(
   packet.writeBytes(body.toUint8Array());
 
   return packet.toUint8Array();
-}
+};
 
-export function encodeConnect(packet: ConnectPacket): Uint8Array {
-  return writePacket(PacketType.CONNECT, 0, (writer) => {
+export const encodeConnect = (packet: ConnectPacket): Uint8Array =>
+  writePacket(PacketType.CONNECT, 0, (writer) => {
     // Variable header
     writer.writeString(PROTOCOL_NAME);
     writer.writeByte(PROTOCOL_VERSION);
@@ -73,10 +73,9 @@ export function encodeConnect(packet: ConnectPacket): Uint8Array {
 
     if (packet.password !== undefined) writer.writeString(packet.password);
   });
-}
 
-export function encodeSubscribe(packet: SubscribePacket): Uint8Array {
-  return writePacket(PacketType.SUBSCRIBE, 0x02, (writer) => {
+export const encodeSubscribe = (packet: SubscribePacket): Uint8Array =>
+  writePacket(PacketType.SUBSCRIBE, 0x02, (writer) => {
     writer.writeUint16(packet.messageId);
 
     for (const sub of packet.subscriptions) {
@@ -84,9 +83,8 @@ export function encodeSubscribe(packet: SubscribePacket): Uint8Array {
       writer.writeByte(sub.qos);
     }
   });
-}
 
-export function encodePublish(packet: PublishPacket): Uint8Array {
+export const encodePublish = (packet: PublishPacket): Uint8Array => {
   let flags = 0;
 
   if (packet.dup) flags |= 0x08;
@@ -104,21 +102,18 @@ export function encodePublish(packet: PublishPacket): Uint8Array {
 
     writer.writeBytes(toUint8Array(packet.payload));
   });
-}
+};
 
-export function encodePuback(packet: PubackPacket): Uint8Array {
-  return writePacket(PacketType.PUBACK, 0, (writer) => {
+export const encodePuback = (packet: PubackPacket): Uint8Array =>
+  writePacket(PacketType.PUBACK, 0, (writer) => {
     writer.writeUint16(packet.messageId);
   });
-}
 
-export function encodePingreq(): Uint8Array {
-  return new Uint8Array([PacketType.PINGREQ << 4, 0]);
-}
+export const encodePingreq = (): Uint8Array =>
+  new Uint8Array([PacketType.PINGREQ << 4, 0]);
 
-export function encodeDisconnect(): Uint8Array {
-  return new Uint8Array([PacketType.DISCONNECT << 4, 0]);
-}
+export const encodeDisconnect = (): Uint8Array =>
+  new Uint8Array([PacketType.DISCONNECT << 4, 0]);
 
 export const encodePacket = (packet: OutgoingPacket): Uint8Array => {
   switch (packet.type) {

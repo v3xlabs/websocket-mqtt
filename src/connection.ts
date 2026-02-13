@@ -60,8 +60,8 @@ export const createConnection = (options: ConnectionOptions) => {
   const log = createLogger(options);
   let lastMessageId = 1;
   let connected = false;
-  let pingInterval: ReturnType<typeof setInterval> | null = null;
-  let ws: WebSocket | null = null;
+  let pingInterval: ReturnType<typeof setInterval> | undefined;
+  let ws: WebSocket | undefined;
 
   const {
     clientId = DEFAULT_CLIENT_ID + Math.random().toString(36)
@@ -175,7 +175,7 @@ export const createConnection = (options: ConnectionOptions) => {
 
     if (pingInterval) {
       clearInterval(pingInterval);
-      pingInterval = null;
+      pingInterval = undefined;
     }
   };
 

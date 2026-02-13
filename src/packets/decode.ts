@@ -14,7 +14,9 @@ export interface DecodeResult {
   bytesConsumed: number;
 }
 
-export function decode(bytes: Uint8Array): DecodeResult | null {
+export const decode = (bytes: Uint8Array): DecodeResult | null => {
+  // Preserve public API semantics: incomplete packets decode to null.
+  // eslint-disable-next-line unicorn/no-null
   if (bytes.length < 2) return null;
 
   const reader = createPacketReader(bytes);
@@ -26,6 +28,7 @@ export function decode(bytes: Uint8Array): DecodeResult | null {
   const headerLength = reader.position;
   const totalLength = headerLength + remainingLength;
 
+  // eslint-disable-next-line unicorn/no-null
   if (bytes.length < totalLength) return null;
 
   const payload = reader.readBytes(remainingLength);
@@ -60,9 +63,9 @@ export function decode(bytes: Uint8Array): DecodeResult | null {
   }
 
   return { packet, bytesConsumed: totalLength };
-}
+};
 
-function decodeConnack(reader: PacketReader): ConnackPacket {
+const decodeConnack = (reader: PacketReader): ConnackPacket => {
   const flags = reader.readByte();
 
   return {
@@ -70,9 +73,9 @@ function decodeConnack(reader: PacketReader): ConnackPacket {
     sessionPresent: (flags & 0x01) === 1,
     returnCode: reader.readByte(),
   };
-}
+};
 
-function decodeSuback(reader: PacketReader): SubackPacket {
+const decodeSuback = (reader: PacketReader): SubackPacket => {
   const messageId = reader.readUint16();
   const granted: number[] = [];
 
@@ -81,9 +84,9 @@ function decodeSuback(reader: PacketReader): SubackPacket {
   }
 
   return { type: PacketType.SUBACK, messageId, granted };
-}
+};
 
-function decodePublish(reader: PacketReader, flags: number): PublishPacket {
+const decodePublish = (reader: PacketReader, flags: number): PublishPacket => {
   const topic = reader.readString();
   const qos = ((flags >> 1) & 0x03) as 0 | 1 | 2;
   const messageId = qos > 0 ? reader.readUint16() : undefined;
@@ -97,16 +100,15 @@ function decodePublish(reader: PacketReader, flags: number): PublishPacket {
     dup: (flags & 0x08) !== 0,
     messageId,
   };
-}
+};
 
-function decodePuback(reader: PacketReader): PubackPacket {
-  return { type: PacketType.PUBACK, messageId: reader.readUint16() };
-}
+const decodePuback = (reader: PacketReader): PubackPacket =>
+  ({ type: PacketType.PUBACK, messageId: reader.readUint16() });
 
-export function decodeAll(bytes: Uint8Array): {
+export const decodeAll = (bytes: Uint8Array): {
   packets: IncomingPacket[];
   remaining: Uint8Array;
-} {
+} => {
   const packets: IncomingPacket[] = [];
   let offset = 0;
 
@@ -120,4 +122,4 @@ export function decodeAll(bytes: Uint8Array): {
   }
 
   return { packets, remaining: bytes.subarray(offset) };
-}
+};
