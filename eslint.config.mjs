@@ -7,6 +7,7 @@ import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import tseslint from 'typescript-eslint';
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports';
+import v3xlabs from 'eslint-plugin-v3xlabs';
 
 export default [
   {
@@ -18,6 +19,7 @@ export default [
       '**/*.js',
     ],
   },
+  v3xlabs.configs,
   eslintJs.configs.recommended,
   ...tseslint.configs.recommended,
   eslintPluginPrettierRecommended,
