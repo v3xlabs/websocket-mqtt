@@ -34,8 +34,8 @@ export function createPacketWriter(initialSize = 256) {
 
     writeUint16(value: number) {
       ensureCapacity(2);
-      buffer[position++] = (value >> 8) & 0xff;
-      buffer[position++] = value & 0xff;
+      buffer[position++] = (value >> 8) & 0xFF;
+      buffer[position++] = value & 0xFF;
 
       return writer;
     },
@@ -140,7 +140,7 @@ export function createPacketReader(buffer: Uint8Array) {
 
       do {
         byte = buffer[position++];
-        value += (byte & 0x7f) * multiplier;
+        value += (byte & 0x7F) * multiplier;
         multiplier *= 128;
       } while (byte & 0x80);
 

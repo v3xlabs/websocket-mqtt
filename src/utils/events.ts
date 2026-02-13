@@ -28,7 +28,7 @@ export const createEventEmitter = <E extends EventMap>(): EventEmitter<E> => {
     },
     emit<K extends keyof E>(event: K, ...args: E[K]) {
       if (listeners.has(event)) {
-        listeners.get(event)!.forEach((listener) => listener(...args));
+        listeners.get(event)!.forEach(listener => listener(...args));
       }
     },
   };

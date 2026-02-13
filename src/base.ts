@@ -31,7 +31,7 @@ export type MqttClient = EventEmitter<MqttEvents> & {
   publish: (
     topic: string,
     payload: string | Uint8Array,
-    options?: { qos?: QoSLevel; retain?: boolean },
+    options?: { qos?: QoSLevel; retain?: boolean; },
   ) => Promise<void>;
   subscribe: (topic: string, qos?: QoSLevel) => Promise<number[]>;
   connect: () => Promise<void>;
@@ -59,7 +59,6 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   connection.on("connect", (packet) => {
     events.emit("connect", packet);
   });
-
   connection.on("message", (topic, payload, packet) => {
     events.emit("message", topic, payload, packet);
   });
@@ -72,11 +71,12 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
 
         if (request) {
           pending.sub.delete(packet.messageId);
-          const hasFailure = packet.granted.some((qos) => qos === 0x80);
+          const hasFailure = packet.granted.includes(0x80);
 
           if (hasFailure) {
             request.reject(new Error("Subscription failed"));
-          } else {
+          }
+          else {
             request.resolve(packet.granted);
           }
         }
@@ -119,7 +119,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   const publish = (
     topic: string,
     payload: string | Uint8Array,
-    options?: { qos?: QoSLevel; retain?: boolean },
+    options?: { qos?: QoSLevel; retain?: boolean; },
   ): Promise<void> => {
     const qos = options?.qos ?? QoS.AT_MOST_ONCE;
     const retain = options?.retain ?? false;
@@ -146,27 +146,23 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   const subscribe = (
     topic: string,
     qos: QoSLevel = QoS.AT_MOST_ONCE,
-  ): Promise<number[]> => {
-    return new Promise((resolve, reject) => {
-      const messageId = connection.nextMessageId();
+  ): Promise<number[]> => new Promise((resolve, reject) => {
+    const messageId = connection.nextMessageId();
 
-      pending.sub.set(messageId, { resolve, reject });
+    pending.sub.set(messageId, { resolve, reject });
 
-      connection.send({
-        type: PacketType.SUBSCRIBE,
-        messageId,
-        subscriptions: [{ topic, qos }],
-      });
+    connection.send({
+      type: PacketType.SUBSCRIBE,
+      messageId,
+      subscriptions: [{ topic, qos }],
     });
-  };
+  });
 
-  const connect = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      connection.open();
-      connection.on("connect", () => resolve());
-      connection.on("error", (err) => reject(err));
-    });
-  };
+  const connect = (): Promise<void> => new Promise((resolve, reject) => {
+    connection.open();
+    connection.on("connect", () => resolve());
+    connection.on("error", err => reject(err));
+  });
 
   return {
     ...events,

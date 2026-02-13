@@ -20,7 +20,7 @@ export function decode(bytes: Uint8Array): DecodeResult | null {
   const reader = createPacketReader(bytes);
   const firstByte = reader.readByte();
   const packetType = firstByte >> 4;
-  const flags = firstByte & 0x0f;
+  const flags = firstByte & 0x0F;
 
   const remainingLength = reader.readVariableInt();
   const headerLength = reader.position;
@@ -34,23 +34,29 @@ export function decode(bytes: Uint8Array): DecodeResult | null {
   let packet: IncomingPacket;
 
   switch (packetType) {
-    case PacketType.CONNACK:
+    case PacketType.CONNACK: {
       packet = decodeConnack(payloadReader);
       break;
-    case PacketType.SUBACK:
+    }
+    case PacketType.SUBACK: {
       packet = decodeSuback(payloadReader);
       break;
-    case PacketType.PUBLISH:
+    }
+    case PacketType.PUBLISH: {
       packet = decodePublish(payloadReader, flags);
       break;
-    case PacketType.PUBACK:
+    }
+    case PacketType.PUBACK: {
       packet = decodePuback(payloadReader);
       break;
-    case PacketType.PINGRESP:
+    }
+    case PacketType.PINGRESP: {
       packet = { type: PacketType.PINGRESP } as PingrespPacket;
       break;
-    default:
+    }
+    default: {
       throw new Error(`Unknown MQTT packet type: ${packetType}`);
+    }
   }
 
   return { packet, bytesConsumed: totalLength };

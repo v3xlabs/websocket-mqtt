@@ -64,7 +64,8 @@ export const createConnection = (options: ConnectionOptions) => {
   let ws: WebSocket | null = null;
 
   const {
-    clientId = DEFAULT_CLIENT_ID + Math.random().toString(36).substring(2, 15),
+    clientId = DEFAULT_CLIENT_ID + Math.random().toString(36)
+      .slice(2, 15),
     username,
     password,
     keepalive = DEFAULT_KEEPALIVE_SECONDS,
@@ -84,7 +85,7 @@ export const createConnection = (options: ConnectionOptions) => {
   const nextMessageId = (): number => {
     const messageId = lastMessageId;
 
-    lastMessageId = (messageId % 65535) + 1;
+    lastMessageId = (messageId % 65_535) + 1;
 
     return lastMessageId;
   };
@@ -101,6 +102,52 @@ export const createConnection = (options: ConnectionOptions) => {
     }
   };
 
+  let receiveBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
+
+  const handlePacket2 = (packet: IncomingPacket) => {
+    log("handlePacket2", packet);
+
+    switch (packet.type) {
+      case PacketType.CONNACK: {
+        if (packet.returnCode === 0) {
+          connected = true;
+          startPingInterval();
+          events.emit("connect", packet);
+          log("connected");
+        }
+        else {
+          const message = getConnackErrorMessage(packet.returnCode);
+
+          console.error(message);
+          events.emit("error", new Error(message));
+          close();
+        }
+
+        break;
+      }
+      case PacketType.PUBLISH: {
+        log("received a publish packet");
+
+        if (packet.qos === 1 && packet.messageId !== undefined) {
+          send({ type: PacketType.PUBACK, messageId: packet.messageId });
+        }
+
+        events.emit("message", packet.topic, packet.payload, packet);
+
+        break;
+      }
+      case PacketType.PINGRESP: {
+        log("PINGRESP");
+        break;
+      }
+      default: {
+        log("received a default packet");
+        events.emit("packet", packet);
+        break;
+      }
+    }
+  };
+
   const send = (packet: OutgoingPacket): void => {
     log("sending packet", packet);
     sendRaw(encodePacket(packet));
@@ -110,7 +157,8 @@ export const createConnection = (options: ConnectionOptions) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       log("sending raw data", data);
       ws.send(data);
-    } else {
+    }
+    else {
       log("not sending raw data", data);
     }
   };
@@ -135,7 +183,7 @@ export const createConnection = (options: ConnectionOptions) => {
     ws = new WebSocket(url, ["mqtt"]);
     ws.binaryType = "arraybuffer";
 
-    ws.onopen = () => {
+    ws.addEventListener("open", () => {
       //   sendConnect();
       const packet = encodeConnect({
         type: PacketType.CONNECT,
@@ -148,50 +196,9 @@ export const createConnection = (options: ConnectionOptions) => {
       });
 
       sendRaw(packet);
-    };
+    });
 
-    let receiveBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
-
-    const handlePacket2 = (packet: IncomingPacket) => {
-      log("handlePacket2", packet);
-
-      switch (packet.type) {
-        case PacketType.CONNACK:
-          if (packet.returnCode === 0) {
-            connected = true;
-            startPingInterval();
-            events.emit("connect", packet);
-            log("connected");
-          } else {
-            const message = getConnackErrorMessage(packet.returnCode);
-
-            console.error(message);
-            events.emit("error", new Error(message));
-            close();
-          }
-
-          break;
-        case PacketType.PUBLISH:
-          log("received a publish packet");
-
-          if (packet.qos === 1 && packet.messageId !== undefined) {
-            send({ type: PacketType.PUBACK, messageId: packet.messageId });
-          }
-
-          events.emit("message", packet.topic, packet.payload, packet);
-
-          break;
-        case PacketType.PINGRESP:
-          log("PINGRESP");
-          break;
-        default:
-          log("received a default packet");
-          events.emit("packet", packet);
-          break;
-      }
-    };
-
-    ws.onmessage = (event) => {
+    ws.addEventListener("message", (event) => {
       log("onmessage");
       const data = new Uint8Array(event.data as ArrayBuffer);
       const combined = new Uint8Array(receiveBuffer.length + data.length);
@@ -211,16 +218,16 @@ export const createConnection = (options: ConnectionOptions) => {
 
         handlePacket2(packet);
       }
-    };
+    });
 
-    ws.onerror = (event) => {
+    ws.addEventListener("error", (event) => {
       events.emit("error", event);
-    };
+    });
 
-    ws.onclose = () => {
+    ws.addEventListener("close", () => {
       log("ws:onclose");
       close();
-    };
+    });
   };
 
   signal?.addEventListener("abort", () => {

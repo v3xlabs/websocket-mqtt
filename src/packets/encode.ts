@@ -29,7 +29,7 @@ function writePacket(
 
   const packet = createPacketWriter();
 
-  packet.writeByte((type << 4) | (flags & 0x0f));
+  packet.writeByte((type << 4) | (flags & 0x0F));
   packet.writeVariableInt(body.length);
   packet.writeBytes(body.toUint8Array());
 
@@ -122,19 +122,24 @@ export function encodeDisconnect(): Uint8Array {
 
 export const encodePacket = (packet: OutgoingPacket): Uint8Array => {
   switch (packet.type) {
-    case PacketType.CONNECT:
+    case PacketType.CONNECT: {
       return encodeConnect(packet);
-    case PacketType.SUBSCRIBE:
+    }
+    case PacketType.SUBSCRIBE: {
       return encodeSubscribe(packet);
-    case PacketType.PUBLISH:
+    }
+    case PacketType.PUBLISH: {
       return encodePublish(packet);
-    case PacketType.PUBACK:
+    }
+    case PacketType.PUBACK: {
       return encodePuback(packet);
+    }
     // case PacketType.DISCONNECT:
     //   return encodeDisconnect();
     // case PacketType.PINGREQ:
     //   return encodePingreq();
-    default:
+    default: {
       throw new Error(`Unknown packet type: ${packet["type"]}`);
+    }
   }
 };

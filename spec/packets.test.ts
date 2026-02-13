@@ -17,7 +17,7 @@ const TEST_TOPIC = "test/topic";
 
 describe("Buffer Utilities", () => {
   test("writer/reader uint16", () => {
-    const values = [0, 1, 255, 256, 65535];
+    const values = [0, 1, 255, 256, 65_535];
 
     for (const value of values) {
       const writer = createPacketWriter();
@@ -38,11 +38,11 @@ describe("Buffer Utilities", () => {
       { value: 0, expectedBytes: 1 },
       { value: 127, expectedBytes: 1 },
       { value: 128, expectedBytes: 2 },
-      { value: 16383, expectedBytes: 2 },
-      { value: 16384, expectedBytes: 3 },
-      { value: 2097151, expectedBytes: 3 },
-      { value: 2097152, expectedBytes: 4 },
-      { value: 268435455, expectedBytes: 4 },
+      { value: 16_383, expectedBytes: 2 },
+      { value: 16_384, expectedBytes: 3 },
+      { value: 2_097_151, expectedBytes: 3 },
+      { value: 2_097_152, expectedBytes: 4 },
+      { value: 268_435_455, expectedBytes: 4 },
     ];
 
     for (const { value, expectedBytes } of testCases) {
@@ -222,7 +222,7 @@ describe("Packet Decoding", () => {
     expect(result).not.toBeNull();
     expect(result!.packet.type).toBe(PacketType.SUBACK);
 
-    const suback = result!.packet as { messageId: number; granted: number[] };
+    const suback = result!.packet as { messageId: number; granted: number[]; };
 
     expect(suback.messageId).toBe(1);
     expect(suback.granted).toEqual([0]);
@@ -246,19 +246,19 @@ describe("Packet Decoding", () => {
   });
 
   test("decode PUBACK", () => {
-    const bytes = new Uint8Array([0x40, 0x02, 0x00, 0x2a]);
+    const bytes = new Uint8Array([0x40, 0x02, 0x00, 0x2A]);
     const result = decode(bytes);
 
     expect(result).not.toBeNull();
     expect(result!.packet.type).toBe(PacketType.PUBACK);
 
-    const puback = result!.packet as { messageId: number };
+    const puback = result!.packet as { messageId: number; };
 
     expect(puback.messageId).toBe(42);
   });
 
   test("decode PINGRESP", () => {
-    const bytes = new Uint8Array([0xd0, 0x00]);
+    const bytes = new Uint8Array([0xD0, 0x00]);
     const result = decode(bytes);
 
     expect(result).not.toBeNull();

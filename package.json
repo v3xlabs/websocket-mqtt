@@ -19,8 +19,8 @@
   "scripts": {
     "test": "vitest",
     "build": "tsc",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint",
+    "lint:fix": "eslint --fix"
   },
   "repository": {
     "url": "https://github.com/v3xlabs/websocket-mqtt"
@@ -30,21 +30,10 @@
   "license": "LGPL-3.0",
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
-    "@eslint/js": "^9.20.0",
-    "@stylistic/eslint-plugin": "^5.7.1",
-    "eslint": "^9.20.0",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-simple-import-sort": "^12.1.1",
-    "eslint-plugin-sonarjs": "^3.0.5",
-    "eslint-plugin-unicorn": "^62.0.0",
-    "eslint-plugin-unused-imports": "^4.3.0",
-    "eslint-plugin-v3xlabs": "1.7.0",
+    "eslint": "^9",
+    "eslint-plugin-v3xlabs": "1.7.11",
     "mqtt": "^5.14.1",
-    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.20.0",
     "vitest": "^4.0.18"
   }
 }
