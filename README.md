@@ -40,3 +40,7 @@ await client.publish("topic", "message");
 
 await client.close();
 ```
+
+## Attribution
+
+We want to thank the incredible work done by [MQTT.js](https://github.com/mqttjs/MQTT.js/) and [eclipse-paho](https://github.com/eclipse-paho/paho.mqtt.javascript).
