@@ -115,6 +115,10 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
     events.emit("close");
   });
 
+  connection.on("reconnect", (attempt, delayMs) => {
+    events.emit("reconnect", attempt, delayMs);
+  });
+
   const publish = (
     topic: string,
     payload: string | Uint8Array,
