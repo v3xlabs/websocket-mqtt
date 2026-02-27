@@ -6,6 +6,12 @@
 A lightweight zero-dependency MQTT WebSocket implementation.
 </p>
 
+<p align="center">
+    <a href="#"><img src="https://img.shields.io/github/actions/workflow/status/v3xlabs/websocket-mqtt/verify.yml?style=flat" alt="Tests Passing"></a>
+    <a href="#"><img src="https://img.shields.io/npm/d18m/websocket-mqtt?style=flat" alt="Downloads"></a>
+    <a href="#"><img src="https://img.shields.io/badge/License-LGPL--3.0-hotpink?style=flat" alt="License: LGPL-3.0"></a>
+</p>
+
 ## Features
 
 - Zero-dependency
@@ -40,3 +46,7 @@ await client.publish("topic", "message");
 
 await client.close();
 ```
+
+## Attribution
+
+We want to thank the incredible work done by [MQTT.js](https://github.com/mqttjs/MQTT.js/) and [eclipse-paho](https://github.com/eclipse-paho/paho.mqtt.javascript).
