@@ -16,14 +16,12 @@ import { createLogger } from "./utils/logger.js";
 
 export type MqttEvents = {
   connect: [packet: ConnackPacket];
+  offline: [];
+  reconnect: [attempt: number, delayMs: number];
+  close: [];
   message: [topic: string, payload: Uint8Array, packet: PublishPacket];
   error: [error: unknown];
-  close: [];
 };
-
-export type MqttOptions = {
-  url: string;
-} & ConnectionOptions;
 
 export type MqttClient = EventEmitter<MqttEvents> & {
   connection: Connection;
@@ -42,12 +40,13 @@ export type MqttClientInternalRequest<K> = {
   resolve: (value: K) => void;
   reject: (err: Error) => void;
 };
+
 export type MqttClientInternalPending = {
   sub: Map<number, MqttClientInternalRequest<number[]>>;
   pub: Map<number, MqttClientInternalRequest<void>>;
 };
 
-export const createMqtt = (options: MqttOptions): MqttClient => {
+export const createMqtt = (options: ConnectionOptions): MqttClient => {
   const pending: MqttClientInternalPending = {
     sub: new Map(),
     pub: new Map(),
@@ -56,12 +55,20 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   const log = createLogger(options);
   const connection = createConnection(options);
 
-  connection.on("connect", (packet) => {
-    events.emit("connect", packet);
-  });
-  connection.on("message", (topic, payload, packet) => {
-    events.emit("message", topic, payload, packet);
-  });
+  const rejectAllPending = () => {
+    for (const request of pending.sub.values()) {
+      request.reject(new Error("Connection closed"));
+    }
+    pending.sub.clear();
+
+    for (const request of pending.pub.values()) {
+      request.reject(new Error("Connection closed"));
+    }
+    pending.pub.clear();
+  };
+
+  connection.on("connect", packet => events.emit("connect", packet));
+  connection.on("message", (topic, payload, packet) => events.emit("message", topic, payload, packet));
 
   connection.on("packet", (packet) => {
     switch (packet.type) {
@@ -97,22 +104,14 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     }
   });
 
-  connection.on("error", (err) => {
-    console.error("error", err);
-    events.emit("error", err);
+  connection.on("error", err => events.emit("error", err));
+  connection.on("reconnect", (attempt, delayMs) => events.emit("reconnect", attempt, delayMs));
+  connection.on("offline", () => {
+    rejectAllPending();
+    events.emit("offline");
   });
-
   connection.on("close", () => {
-    for (const request of pending.sub.values()) {
-      request.reject(new Error("Connection closed"));
-    }
-    pending.sub.clear();
-
-    for (const request of pending.pub.values()) {
-      request.reject(new Error("Connection closed"));
-    }
-    pending.pub.clear();
-
+    rejectAllPending();
     events.emit("close");
   });
 
@@ -143,6 +142,7 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
       if (messageId) pending.pub.set(messageId, { resolve, reject });
     });
   };
+
   const subscribe = (
     topic: string,
     qos: QoSLevel = QoS.AT_MOST_ONCE,
@@ -159,9 +159,27 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
   });
 
   const connect = (): Promise<void> => new Promise((resolve, reject) => {
+    // Resolves on the first successful connect (including after retries).
+    // Rejects only when the connection is permanently closed (retries exhausted
+    // or intentional close).
+    const onConnect = () => {
+      cleanup();
+      resolve();
+    };
+
+    const onClose = () => {
+      cleanup();
+      reject(new Error("Connection closed"));
+    };
+
+    const cleanup = () => {
+      connection.off("connect", onConnect);
+      connection.off("close", onClose);
+    };
+
+    connection.on("connect", onConnect);
+    connection.on("close", onClose);
     connection.open();
-    connection.on("connect", () => resolve());
-    connection.on("error", err => reject(err));
   });
 
   return {
@@ -171,9 +189,6 @@ export const createMqtt = (options: MqttOptions): MqttClient => {
     connection,
     isConnected: () => connection.isConnected(),
     connect,
-    close: () => {
-      log("closing from up above");
-      connection.close();
-    },
+    close: () => connection.close(),
   };
 };
