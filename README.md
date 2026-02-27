@@ -42,6 +42,8 @@ client.on("message", (topic, payload) => {
 
 await client.subscribe("topic");
 
+await client.unsubscribe("topic");
+
 await client.publish("topic", "message");
 
 await client.close();
