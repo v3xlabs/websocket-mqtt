@@ -32,6 +32,7 @@ export type MqttClient = EventEmitter<MqttEvents> & {
     options?: { qos?: QoSLevel; retain?: boolean; },
   ) => Promise<void>;
   subscribe: (topic: string, qos?: QoSLevel) => Promise<number[]>;
+  unsubscribe: (topic: string | string[]) => Promise<void>;
   connect: () => Promise<void>;
   close: () => void;
 };
@@ -43,12 +44,14 @@ export type MqttClientInternalRequest<K> = {
 
 export type MqttClientInternalPending = {
   sub: Map<number, MqttClientInternalRequest<number[]>>;
+  unsub: Map<number, MqttClientInternalRequest<void>>;
   pub: Map<number, MqttClientInternalRequest<void>>;
 };
 
 export const createMqtt = (options: ConnectionOptions): MqttClient => {
   const pending: MqttClientInternalPending = {
     sub: new Map(),
+    unsub: new Map(),
     pub: new Map(),
   };
   const events = createEventEmitter<MqttEvents>();
@@ -60,6 +63,11 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
       request.reject(new Error("Connection closed"));
     }
     pending.sub.clear();
+
+    for (const request of pending.unsub.values()) {
+      request.reject(new Error("Connection closed"));
+    }
+    pending.unsub.clear();
 
     for (const request of pending.pub.values()) {
       request.reject(new Error("Connection closed"));
@@ -86,6 +94,17 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
           else {
             request.resolve(packet.granted);
           }
+        }
+
+        break;
+      }
+      case PacketType.UNSUBACK: {
+        log("UNSUBACK", packet);
+        const request = pending.unsub.get(packet.messageId);
+
+        if (request) {
+          pending.unsub.delete(packet.messageId);
+          request.resolve();
         }
 
         break;
@@ -162,6 +181,21 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
     });
   });
 
+  const unsubscribe = (
+    topic: string | string[],
+  ): Promise<void> => new Promise((resolve, reject) => {
+    const topics = Array.isArray(topic) ? topic : [topic];
+    const messageId = connection.nextMessageId();
+
+    pending.unsub.set(messageId, { resolve, reject });
+
+    connection.send({
+      type: PacketType.UNSUBSCRIBE,
+      messageId,
+      topics,
+    });
+  });
+
   const connect = (): Promise<void> => new Promise((resolve, reject) => {
     // Resolves on the first successful connect (including after retries).
     // Rejects only when the connection is permanently closed (retries exhausted
@@ -190,6 +224,7 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
     ...events,
     publish,
     subscribe,
+    unsubscribe,
     connection,
     isConnected: () => connection.isConnected(),
     connect,

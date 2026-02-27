@@ -16,6 +16,7 @@ import type {
   PubackPacket,
   PublishPacket,
   SubscribePacket,
+  UnsubscribePacket,
 } from "./types.js";
 
 const writePacket = (
@@ -84,6 +85,15 @@ export const encodeSubscribe = (packet: SubscribePacket): Uint8Array =>
     }
   });
 
+export const encodeUnsubscribe = (packet: UnsubscribePacket): Uint8Array =>
+  writePacket(PacketType.UNSUBSCRIBE, 0x02, (writer) => {
+    writer.writeUint16(packet.messageId);
+
+    for (const topic of packet.topics) {
+      writer.writeString(topic);
+    }
+  });
+
 export const encodePublish = (packet: PublishPacket): Uint8Array => {
   let flags = 0;
 
@@ -122,6 +132,9 @@ export const encodePacket = (packet: OutgoingPacket): Uint8Array => {
     }
     case PacketType.SUBSCRIBE: {
       return encodeSubscribe(packet);
+    }
+    case PacketType.UNSUBSCRIBE: {
+      return encodeUnsubscribe(packet);
     }
     case PacketType.PUBLISH: {
       return encodePublish(packet);

@@ -7,6 +7,7 @@ import type {
   PubackPacket,
   PublishPacket,
   SubackPacket,
+  UnsubackPacket,
 } from "./types.js";
 
 export interface DecodeResult {
@@ -51,6 +52,10 @@ export const decode = (bytes: Uint8Array): DecodeResult | null => {
     }
     case PacketType.PUBACK: {
       packet = decodePuback(payloadReader);
+      break;
+    }
+    case PacketType.UNSUBACK: {
+      packet = decodeUnsuback(payloadReader);
       break;
     }
     case PacketType.PINGRESP: {
@@ -104,6 +109,9 @@ const decodePublish = (reader: PacketReader, flags: number): PublishPacket => {
 
 const decodePuback = (reader: PacketReader): PubackPacket =>
   ({ type: PacketType.PUBACK, messageId: reader.readUint16() });
+
+const decodeUnsuback = (reader: PacketReader): UnsubackPacket =>
+  ({ type: PacketType.UNSUBACK, messageId: reader.readUint16() });
 
 export const decodeAll = (bytes: Uint8Array): {
   packets: IncomingPacket[];
