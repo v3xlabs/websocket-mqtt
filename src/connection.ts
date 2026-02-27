@@ -82,18 +82,18 @@ export const createConnection = (options: ConnectionOptions) => {
     forceClose: undefined as ReturnType<typeof setTimeout> | undefined,
 
     clearAll() {
-      if (this.pingInterval) clearInterval(this.pingInterval);
+      if (timers.pingInterval) clearInterval(timers.pingInterval);
 
-      if (this.pingTimeout) clearTimeout(this.pingTimeout);
+      if (timers.pingTimeout) clearTimeout(timers.pingTimeout);
 
-      if (this.retry) clearTimeout(this.retry);
+      if (timers.retry) clearTimeout(timers.retry);
 
-      if (this.forceClose) clearTimeout(this.forceClose);
+      if (timers.forceClose) clearTimeout(timers.forceClose);
 
-      this.pingInterval = undefined;
-      this.pingTimeout = undefined;
-      this.retry = undefined;
-      this.forceClose = undefined;
+      timers.pingInterval = undefined;
+      timers.pingTimeout = undefined;
+      timers.retry = undefined;
+      timers.forceClose = undefined;
     },
   };
 
