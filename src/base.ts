@@ -40,6 +40,7 @@ export type MqttClientInternalRequest<K> = {
   resolve: (value: K) => void;
   reject: (err: Error) => void;
 };
+
 export type MqttClientInternalPending = {
   sub: Map<number, MqttClientInternalRequest<number[]>>;
   pub: Map<number, MqttClientInternalRequest<void>>;
@@ -66,12 +67,8 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
     pending.pub.clear();
   };
 
-  connection.on("connect", (packet) => {
-    events.emit("connect", packet);
-  });
-  connection.on("message", (topic, payload, packet) => {
-    events.emit("message", topic, payload, packet);
-  });
+  connection.on("connect", packet => events.emit("connect", packet));
+  connection.on("message", (topic, payload, packet) => events.emit("message", topic, payload, packet));
 
   connection.on("packet", (packet) => {
     switch (packet.type) {
@@ -107,22 +104,15 @@ export const createMqtt = (options: ConnectionOptions): MqttClient => {
     }
   });
 
-  connection.on("error", (err) => {
-    events.emit("error", err);
-  });
-
+  connection.on("error", err => events.emit("error", err));
+  connection.on("reconnect", (attempt, delayMs) => events.emit("reconnect", attempt, delayMs));
   connection.on("offline", () => {
     rejectAllPending();
     events.emit("offline");
   });
-
   connection.on("close", () => {
     rejectAllPending();
     events.emit("close");
-  });
-
-  connection.on("reconnect", (attempt, delayMs) => {
-    events.emit("reconnect", attempt, delayMs);
   });
 
   const publish = (
