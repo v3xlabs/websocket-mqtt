@@ -13,6 +13,7 @@ export default defineConfig({
         },
       },
       {
+        extends: true,
         test: {
           name: { label: "browser", color: "blue" },
           browser: {
