@@ -1,11 +1,12 @@
-import {
-  connect as connectStandard,
-  MqttClient as StandardMqttClient,
-} from "mqtt";
+import type { MqttClient as StandardMqttClient } from "mqtt";
+// eslint-disable-next-line unicorn/no-named-default
+import { default as mqttjs } from "mqtt";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import { createMqtt, MqttClient } from "../src";
 import { ConnectionOptions } from "../src/connection";
+
+const { connect: connectStandard } = mqttjs;
 
 const TEST_BROKER = "wss://broker.itdata.nu/mqtt";
 
@@ -396,7 +397,7 @@ describe("Binary Payload Handling", () => {
 
   test("binary data from standard library to ours", async () => {
     const topic = generateTopic();
-    const binaryData = Buffer.from([0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD]);
+    const binaryData = new Uint8Array([0x00, 0x01, 0x02, 0xFF, 0xFE, 0xFD]);
 
     await ourClient.subscribe(topic);
 

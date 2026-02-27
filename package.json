@@ -30,9 +30,11 @@
   "license": "LGPL-3.0",
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
+    "@vitest/browser-playwright": "^4.0.18",
     "eslint": "^9",
     "eslint-plugin-v3xlabs": "1.7.11",
     "mqtt": "^5.14.1",
+    "playwright": "1.58.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
