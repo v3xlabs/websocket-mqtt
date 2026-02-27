@@ -1,6 +1,10 @@
-# websocket-mqtt
+<p align="center">
+  <img width="1660" height="360" alt="websocket-mqtt" src="https://github.com/user-attachments/assets/8e23d640-c84e-400f-9895-61f5876fab3b" />
+</p>
 
+<p align="center">
 A lightweight zero-dependency MQTT WebSocket implementation.
+</p>
 
 ## Features
 
