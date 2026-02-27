@@ -61,6 +61,19 @@ export type SubackPacket = BasePacket & {
   granted: number[]; // Array of granted QoS levels or 0x80 for failure
 };
 
+// UNSUBSCRIBE Packet (Client => Broker)
+export type UnsubscribePacket = BasePacket & {
+  type: 10;
+  messageId: number;
+  topics: string[];
+};
+
+// UNSUBACK Packet (Broker => Client)
+export type UnsubackPacket = BasePacket & {
+  type: 11;
+  messageId: number;
+};
+
 // PINGREQ Packet (Client => Broker)
 export type PingreqPacket = BasePacket & {
   type: 12;
@@ -83,6 +96,8 @@ export type MqttPacket =
   | PubackPacket
   | SubscribePacket
   | SubackPacket
+  | UnsubscribePacket
+  | UnsubackPacket
   | PingreqPacket
   | PingrespPacket
   | DisconnectPacket;
@@ -92,11 +107,13 @@ export type IncomingPacket =
   | PublishPacket
   | PubackPacket
   | SubackPacket
+  | UnsubackPacket
   | PingrespPacket;
 
 export type OutgoingPacket =
   | ConnectPacket
   | SubscribePacket
+  | UnsubscribePacket
   | PublishPacket
   | PubackPacket
   | DisconnectPacket
