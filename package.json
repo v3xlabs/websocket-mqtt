@@ -35,5 +35,8 @@
     "mqtt": "^5.14.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "autoInstallPeers": false
   }
 }
