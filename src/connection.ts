@@ -8,6 +8,7 @@ import {
   ConnackPacket,
   decodeAll,
   DEFAULT_KEEPALIVE_SECONDS,
+  getConnackErrorMessage,
   IncomingPacket,
   OutgoingPacket,
   PacketType,
@@ -16,6 +17,7 @@ import {
   QoSLevel,
 } from "./packets/index.js";
 import { toUint8Array } from "./utils/buffer.js";
+import { createCounter } from "./utils/counter.js";
 import { createEventEmitter } from "./utils/events.js";
 import { createLogger, type LogOptions } from "./utils/logger.js";
 
@@ -70,10 +72,10 @@ export const DEFAULT_CLIENT_ID = "websocket_mqtt_";
 export const createConnection = (options: ConnectionOptions) => {
   const events = createEventEmitter<ConnectionEvents>();
   const log = createLogger(options);
-  let lastMessageId = 1;
+  const { next: nextMessageId } = createCounter();
   let connected = false;
   let ws: WebSocket | undefined;
-  let activeAc: AbortController | undefined;
+  let activeController: AbortController | undefined;
 
   const timers = {
     pingInterval: undefined as ReturnType<typeof setInterval> | undefined,
@@ -126,14 +128,6 @@ export const createConnection = (options: ConnectionOptions) => {
       }
     : undefined;
 
-  const nextMessageId = (): number => {
-    const messageId = lastMessageId;
-
-    lastMessageId = (messageId % 65_535) + 1;
-
-    return lastMessageId;
-  };
-
   let receiveBuffer: Uint8Array<ArrayBufferLike> = new Uint8Array(0);
 
   const send = (packet: OutgoingPacket): void => {
@@ -182,9 +176,9 @@ export const createConnection = (options: ConnectionOptions) => {
     timers.clearAll();
 
     // Detach all WebSocket listeners before closing to prevent handleDisconnect
-    if (activeAc) {
-      activeAc.abort();
-      activeAc = undefined;
+    if (activeController) {
+      activeController.abort();
+      activeController = undefined;
     }
 
     if (connected && ws) {
@@ -202,18 +196,15 @@ export const createConnection = (options: ConnectionOptions) => {
     receiveBuffer = new Uint8Array(0);
 
     // Abort previous WebSocket listeners and close socket if open() is called again
-    if (activeAc) {
-      activeAc.abort();
-    }
+    if (activeController) activeController.abort();
 
-    ws?.close();
+    if (ws) ws.close();
 
-    const ac = new AbortController();
+    const controller = new AbortController();
 
-    activeAc = ac;
+    activeController = controller;
 
-    const { signal: wsSignal } = ac;
-
+    const { signal } = controller;
     let disconnected = false;
 
     const handleDisconnect = () => {
@@ -221,8 +212,8 @@ export const createConnection = (options: ConnectionOptions) => {
 
       disconnected = true;
 
-      ac.abort();
-      activeAc = undefined;
+      controller.abort();
+      activeController = undefined;
       log("ws:disconnect");
       connected = false;
       timers.clearAll();
@@ -342,7 +333,7 @@ export const createConnection = (options: ConnectionOptions) => {
       });
 
       sendRaw(packet);
-    }, { signal: wsSignal });
+    }, { signal });
 
     ws.addEventListener("message", (event) => {
       log("onmessage");
@@ -362,7 +353,7 @@ export const createConnection = (options: ConnectionOptions) => {
       for (const packet of packets) {
         handlePacket(packet);
       }
-    }, { signal: wsSignal });
+    }, { signal });
 
     ws.addEventListener("error", (event) => {
       events.emit("error", event);
@@ -372,9 +363,9 @@ export const createConnection = (options: ConnectionOptions) => {
       if (!connected) {
         handleDisconnect();
       }
-    }, { signal: wsSignal });
+    }, { signal });
 
-    ws.addEventListener("close", handleDisconnect, { signal: wsSignal });
+    ws.addEventListener("close", handleDisconnect, { signal });
   };
 
   signal?.addEventListener("abort", () => {
@@ -390,16 +381,4 @@ export const createConnection = (options: ConnectionOptions) => {
     isConnected: () => connected,
     ...events,
   };
-};
-
-const getConnackErrorMessage = (returnCode: number): string => {
-  const errorMessages: Record<number, string> = {
-    1: "Connection refused: unacceptable protocol version",
-    2: "Connection refused: identifier rejected",
-    3: "Connection refused: server unavailable",
-    4: "Connection refused: bad username or password",
-    5: "Connection refused: not authorized",
-  };
-
-  return errorMessages[returnCode] || `Connection refused: ${returnCode}`;
 };

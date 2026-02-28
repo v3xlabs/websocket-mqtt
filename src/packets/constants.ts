@@ -48,6 +48,18 @@ export const ConnackReturnCode = {
   NOT_AUTHORIZED: 5,
 } as const;
 
+export const getConnackErrorMessage = (returnCode: number): string => {
+  const errorMessages: Record<number, string> = {
+    1: "Connection refused: unacceptable protocol version",
+    2: "Connection refused: identifier rejected",
+    3: "Connection refused: server unavailable",
+    4: "Connection refused: bad username or password",
+    5: "Connection refused: not authorized",
+  };
+
+  return errorMessages[returnCode] || `Connection refused: ${returnCode}`;
+};
+
 export const SubackReturnCode = {
   SUCCESS_QOS_0: 0,
   SUCCESS_QOS_1: 1,
