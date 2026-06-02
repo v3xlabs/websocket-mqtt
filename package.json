@@ -1,7 +1,7 @@
 {
   "name": "websocket-mqtt",
   "description": "A lightweight MQTT WebSocket client library",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -25,21 +25,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/v3xlabs/websocket-mqtt.git"
+    "url": "git+https://github.com/v3xlabs/websocket-mqtt.git"
   },
+  "sideEffects": false,
   "keywords": [],
   "author": "V3X Labs",
   "license": "LGPL-3.0",
-  "dependencies": {},
   "devDependencies": {
     "@vitest/browser-playwright": "^4.0.18",
     "eslint": "^9",
     "eslint-plugin-v3xlabs": "1.7.11",
     "mqtt": "^5.14.1",
     "playwright": "1.58.1",
+    "publint": "^0.3.21",
     "tsdown": "^0.22.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.15.0"
 }
