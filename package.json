@@ -18,7 +18,7 @@
   },
   "scripts": {
     "test": "vitest",
-    "build": "tsc",
+    "build": "tsdown",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
   },
@@ -35,6 +35,7 @@
     "eslint-plugin-v3xlabs": "1.7.11",
     "mqtt": "^5.14.1",
     "playwright": "1.58.1",
+    "tsdown": "^0.22.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
